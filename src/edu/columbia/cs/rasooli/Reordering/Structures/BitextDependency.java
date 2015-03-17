@@ -1,7 +1,8 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -116,4 +117,6 @@ public class BitextDependency {
     public DependencyTree getSourceTree() {
         return sourceTree;
     }
+
+
 }

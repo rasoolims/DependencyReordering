@@ -28,7 +28,11 @@ public class TrainData {
         int numOfChangedOrders=0;
         int numOfChangedSentences=0;
         
+        int count=0;
         for(BitextDependency bitextDependency:data){
+            count++;
+            if(count%1000==0)
+                System.err.print(count+"...");
             boolean changed=false;
             for(int head: bitextDependency.getTrainableHeads()){
                HashSet<Integer> deps=bitextDependency.getSourceTree().getDependents(head);
@@ -42,7 +46,7 @@ public class TrainData {
                 for(int dep:origOrderSet)
                     origOrder[i++]=dep;
                 
-                ContextInstance origContext=new ContextInstance(head,origOrder);
+                ContextInstance origContext=new ContextInstance(head,origOrder,bitextDependency.getSourceTree());
 
                 TreeMap<Integer, Integer> changedOrder=new TreeMap<Integer, Integer>();
                 
@@ -56,7 +60,7 @@ public class TrainData {
                 for(int dep:changedOrder.keySet())
                      goldOrder[i++]=changedOrder.get(dep);
                 
-                ContextInstance goldContext=new ContextInstance(head,goldOrder);
+                ContextInstance goldContext=new ContextInstance(head,goldOrder,bitextDependency.getSourceTree());
 
                 if(!goldContext.equals(origContext)) {
                     numOfChangedOrders++;
@@ -68,11 +72,20 @@ public class TrainData {
                 numOfChangedSentences++;
 
         }
+        System.err.print(count+"\n");
         float proportion=100.0f*(float)numOfChangedOrders/trainData.size();
         System.out.println(proportion);
 
         proportion=100.0f*(float)numOfChangedSentences/data.size();
         System.out.println(proportion);
         return trainData;
+    }
+
+    public ContextInstance getGoldInstance() {
+        return goldInstance;
+    }
+
+    public ContextInstance getOriginalInstance() {
+        return originalInstance;
     }
 }

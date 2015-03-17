@@ -1,8 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -15,15 +14,17 @@ import java.util.Arrays;
 public class ContextInstance implements Comparable{
     int headIndex;
     int[] order;
+    public DependencyTree tree;
     final static int[] possibilities=new int[]{2,6,24,120,720,5040,40320};
 
-    public ContextInstance(int headIndex, int[] order) {
+    public ContextInstance(int headIndex, int[] order, DependencyTree originalTree) {
         this.headIndex = headIndex;
         this.order = order;
+        this.tree=originalTree.getFullOrder(order,headIndex);
     }
 
-    public  ArrayList<int[]> getAllPossibleContexts(){
-       int possib=order.length>8?1:possibilities[order.length-1];
+    private   ArrayList<int[]> getAllPossibleContexts(){
+       int possib=order.length>7?1:possibilities[order.length-1];
         if(possib==1){
             ArrayList<int[]> p=new ArrayList<int[]>();
             p.add(order);
@@ -62,6 +63,153 @@ public class ContextInstance implements Comparable{
             }
         }
         return newArray;
+    }
+
+    public int[] getOrder() {
+        return order;
+    }
+    
+    public ArrayList<ContextInstance>  getPossibleContexts(){
+        ArrayList<int[]> permutations=getAllPossibleContexts();
+        ArrayList<ContextInstance> candidates=new ArrayList<ContextInstance>();
+        for(int[] order:permutations){
+            candidates.add(new ContextInstance(headIndex,order,tree) );
+        }
+        return candidates;
+        
+    }
+
+    public ArrayList<String> extractMainFeatures(){
+        ArrayList<String> features=new ArrayList<String>();
+
+        Word[] words=tree.words;
+        int[] treeOrder=tree.order;
+        int[] indices=tree.indices;
+        
+        //region head feature
+        Word headWord=words[headIndex];
+        features.add("head:word:"+headWord.wordForm);
+        features.add("head:cpos:"+headWord.cPos);
+        features.add("head:fpos:"+headWord.fPos);
+        //endregion
+        
+        for(int i=0;i<order.length;i++){
+            if (order[i]==headIndex)
+                continue;
+            //region children
+            String position="before";
+            if(indices[order[i]]==indices[headIndex]-1)
+                position="imm-before";
+            else if(indices[order[i]]==indices[headIndex]+1)
+                position="imm-after";
+            else if(indices[order[i]]>indices[headIndex])
+                position="after";
+
+            Word child=words[order[i]];
+
+            features.add("children:word:"+position+":"+child.wordForm);
+            features.add("children:cpos:"+position+":"+child.cPos);
+            features.add("children:fpos:"+position+":"+child.fPos);
+            //endregion
+            
+            //region there is a gap with head
+            if(!position.startsWith("imm")) {
+                int first, last;
+                if (position.equals("before")) {
+                    last = treeOrder[indices[headIndex] - 1];
+                    first = treeOrder[indices[order[i]] + 1];
+                } else {
+                    last = treeOrder[indices[order[i]] + 1];
+                    first = treeOrder[indices[headIndex] - 1];
+                }
+
+                Word firstWord = words[first];
+                Word lastWord = words[last];
+
+                features.add("first_gap:word:"+firstWord.wordForm);
+                features.add("first_gap:cpos:"+firstWord.cPos);
+                features.add("first_gap:fpos:"+firstWord.fPos);
+
+                features.add("last_gap:word:"+lastWord.wordForm);
+                features.add("last_gap:cpos:"+lastWord.cPos);
+                features.add("last_gap:fpos:"+lastWord.fPos);
+            }
+            //endregion
+
+            //region consecutive children
+            if(i<order.length-1 && order[i+1]!=headIndex && (indices[order[i+1]]-indices[order[i]]>1)) {
+                int last = treeOrder[indices[order[i + 1]] - 1];
+                int first = treeOrder[indices[order[i]] + 1];
+
+                Word firstWord = words[first];
+                Word lastWord = words[last];
+
+                features.add("first_consec_gap:word:"+firstWord.wordForm);
+                features.add("first_consec_gap:cpos:"+firstWord.cPos);
+                features.add("first_consec_gap:fpos:"+firstWord.fPos);
+
+                features.add("last_consec_gap:word:"+lastWord.wordForm);
+                features.add("last_consec_gap:cpos:"+lastWord.cPos);
+                features.add("last_consec_gap:fpos:"+lastWord.fPos);
+            }
+            //endregion
+        }
+        
+        //region left and right siblings of head
+        int headOfHead=tree.getCurrentHead(headIndex);
+        HashSet<Integer> siblings=tree.getDependents(headOfHead);
+        TreeMap<Integer,Integer> siblingMap=new TreeMap<Integer,Integer>();
+        
+        for(int sib:siblings) {
+            siblingMap.put(indices[sib],sib);
+        }
+        
+        int headOrder=0;
+        int[] orderedSiblings=new int[siblingMap.size()];
+        int i=0;
+        for(int sib:siblingMap.keySet()){
+            int sb=siblingMap.get(sib);
+            if(sb==headIndex)
+                headOrder=i;
+            orderedSiblings[i++]=sb ;
+        }
+        
+        if(headOrder>0){
+            Word leftSibling = words[orderedSiblings[headOrder-1]];
+            features.add("left_sibling:word:"+leftSibling.wordForm);
+            features.add("left_sibling:cpos:"+leftSibling.cPos);
+            features.add("left_sibling:fpos:"+leftSibling.fPos); 
+        } else{
+            features.add("left_sibling:word:NONE");
+            features.add("left_sibling:cpos:NONE");
+            features.add("left_sibling:fpos:NONE");
+        }
+        
+        if(headOrder<orderedSiblings.length-1){
+            Word rightSibling = words[orderedSiblings[headOrder+1]];
+            features.add("right_sibling:word:"+rightSibling.wordForm);
+            features.add("right_sibling:cpos:"+rightSibling.cPos);
+            features.add("right_sibling:fpos:"+rightSibling.fPos);
+        }  else{
+            features.add("right_sibling:word:NONE");
+            features.add("right_sibling:cpos:NONE");
+            features.add("right_sibling:fpos:NONE");
+        }
+       //endregion 
+        
+        
+        //region bilexical features
+       int featLen=features.size();
+        for( i=0;i<featLen;i++){
+            for(int j=0;j<featLen;j++){
+                if(i==j)
+                    continue;
+                features.add(features.get(i)+"|"+features.get(j));
+            }
+        }
+        //endregion
+        
+        return features;
     }
 
     //region compareTo

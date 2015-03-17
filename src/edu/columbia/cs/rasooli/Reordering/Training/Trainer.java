@@ -1,5 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Training;
 
+import java.util.ArrayList;
+
 /**
  * Created by Mohammad Sadegh Rasooli.
  * ML-NLP Lab, Department of Computer Science, Columbia University
@@ -9,4 +11,8 @@ package edu.columbia.cs.rasooli.Reordering.Training;
  */
 
 public class Trainer {
+    public  static  void train(ArrayList<TrainData> trainingData){
+        //todo
+        
+    }
 }
