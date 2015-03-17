@@ -1,0 +1,11 @@
+
+out/*
+.idea/description.html
+
+.idea/project-template.xml
+
+.idea/uiDesigner.xml
+
+out/production/DependencyReordering/sample_data/corpus.tok.clean.tag.yara.parsed.mst.en
+
+out/production/DependencyReordering/sample_data/en-ptb.map
