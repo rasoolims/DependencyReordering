@@ -2,6 +2,7 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
+import edu.columbia.cs.rasooli.Reordering.Structures.Pair;
 
 import java.util.*;
 
@@ -17,53 +18,19 @@ public class TrainData {
     ContextInstance goldInstance;
     ContextInstance originalInstance;
     ArrayList<String> goldFeatures;
+    ArrayList<ContextInstance> candidates;
 
-    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance) {
+    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
         this.originalInstance = originalInstance;
         this.goldInstance = goldInstance;
         this.goldFeatures=goldInstance.extractMainFeatures();
+        candidates= originalInstance.getPossibleContexts(posOrderFrequencyDic, topK);
     }
 
 
-    public static   HashMap<String,Integer> constructPosOrderFrequency(ArrayList<BitextDependency> data) {
-        HashMap<String, Integer> posOrderMap = new HashMap<String, Integer>();
-        System.err.print("Constructing frequency maps...");
-        int count = 0;
-        for (BitextDependency bitextDependency : data) {
-            count++;
-            if (count % 10000 == 0)
-                System.err.print(count + "...");
-            for (int head : bitextDependency.getTrainableHeads()) {
-                HashSet<Integer> deps = bitextDependency.getSourceTree().getDependents(head);
-                TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
-                origOrderSet.add(head);
-                for (int dep : deps)
-                    origOrderSet.add(dep);
 
-                TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
 
-                SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
-                changedOrder.put(alignedSet[head].first(), head);
-                for (int dep : origOrderSet)
-                    changedOrder.put(alignedSet[dep].first(), dep);
-
-                int[] goldOrder = new int[1 + deps.size()];
-                int i = 0;
-                for (int dep : changedOrder.keySet())
-                    goldOrder[i++] = changedOrder.get(dep);
-
-                String posOrderStr = bitextDependency.getSourceTree().toPosString(goldOrder, head);
-                if (!posOrderMap.containsKey(posOrderStr))
-                    posOrderMap.put(posOrderStr, 1);
-                else
-                    posOrderMap.put(posOrderStr, posOrderMap.get(posOrderStr) + 1);
-            }
-        }
-        System.err.print(count + "\n");
-        return posOrderMap;
-    }
-    
-    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data) {
+    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
         ArrayList<TrainData> trainData = new ArrayList<TrainData>(3*data.size());
         int numOfChangedOrders = 0;
         int numOfChangedSentences = 0;
@@ -106,7 +73,7 @@ public class TrainData {
                     numOfChangedOrders++;
                     changed = true;
                 }
-                trainData.add(new TrainData(origContext, goldContext));
+                trainData.add(new TrainData(origContext, goldContext,posOrderFrequencyDic,topK));
             }
             if (changed)
                 numOfChangedSentences++;
@@ -114,16 +81,17 @@ public class TrainData {
         }
         System.err.print(count + "\n");
         float proportion = 100.0f * (float) numOfChangedOrders / trainData.size();
-        System.out.println(proportion);
+        System.err.println(proportion);
 
         proportion = 100.0f * (float) numOfChangedSentences / data.size();
-        System.out.println(proportion);
+        System.err.println(proportion);
         return  trainData;
     }
 
     public ContextInstance getGoldInstance() {
         return goldInstance;
     }
+
 
     public ContextInstance getOriginalInstance() {
         return originalInstance;

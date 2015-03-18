@@ -13,11 +13,11 @@ import java.util.HashMap;
 class BitextDependencyReaderTest {
     public static void main(String[] args) throws Exception {
         String filePath = new File("").getAbsolutePath();
-        String p1=  filePath + "/src/sample_data/parse.mst.en";
-        String p2=   filePath + "/src/sample_data/intersection.txt";
-        String p3=     filePath + "/src/sample_data/en-ptb.map";
-        String p4=    filePath + "/src/sample_data/parse.mst.en";
-        String p5=   filePath + "/src/sample_data/intersection.txt";
+        String p1=  filePath + "/sample_data/parse.mst.en";
+        String p2=   filePath + "/sample_data/intersection.txt";
+        String p3=     filePath + "/sample_data/en-ptb.map";
+        String p4=    filePath + "/sample_data/parse.mst.en";
+        String p5=   filePath + "/sample_data/intersection.txt";
         String p6=    "/tmp/reorder.model";
 
         if(args.length>5){
@@ -29,13 +29,8 @@ class BitextDependencyReaderTest {
             p6=new File(args[5]).getAbsolutePath();
         }
 
-        ArrayList<BitextDependency> data = testReadFromBitext(p1, p2,p3 );
-        ArrayList<BitextDependency> devBitext = testReadFromBitext(p4, p5,p3 );
-        HashMap<String,Integer> posOrderMap=TrainData.constructPosOrderFrequency(data);
-      ArrayList<TrainData> trainingData = TrainData.getAllPossibleTrainData(data);
-        ArrayList<TrainData> devData = TrainData.getAllPossibleTrainData(devBitext);
-        Trainer.trainWithPerceptron(trainingData, devData, new AveragedPerceptron(), 10, p6, posOrderMap, 20);
-        System.out.println("test successful " + data.size());
+        Trainer.trainWithPerceptron(p1,p2,p4,p5,p3,new AveragedPerceptron(),10,p6,20);
+        System.err.println("test successful" );
     }
 
     public static ArrayList<BitextDependency> testReadFromBitext(String parsedFilePath, String alignIntersectionPath, String universalPosPath) throws Exception {

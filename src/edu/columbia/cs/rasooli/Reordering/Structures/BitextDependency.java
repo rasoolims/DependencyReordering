@@ -1,7 +1,8 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
-import java.util.HashSet;
-import java.util.SortedSet;
+import edu.columbia.cs.rasooli.Reordering.Training.TrainData;
+
+import java.util.*;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -115,6 +116,42 @@ public class BitextDependency {
 
     public DependencyTree getSourceTree() {
         return sourceTree;
+    }
+    
+    public ArrayList<TrainData> getAllPossibleTrainData(HashMap<String,Integer> posOrderFrequencyDic, int topK) {
+        ArrayList<TrainData> trainData = new ArrayList<TrainData>();
+        for (int head : getTrainableHeads()) {
+            HashSet<Integer> deps = sourceTree.getDependents(head);
+            TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+            origOrderSet.add(head);
+            for (int dep : deps)
+                origOrderSet.add(dep);
+
+            int[] origOrder = new int[1 + deps.size()];
+            int i = 0;
+            for (int dep : origOrderSet)
+                origOrder[i++] = dep;
+
+            ContextInstance origContext = new ContextInstance(head, origOrder, sourceTree);
+
+            TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+
+            SortedSet<Integer>[] alignedSet = getAlignedWords();
+            changedOrder.put(alignedSet[head].first(), head);
+            for (int dep : origOrderSet)
+                changedOrder.put(alignedSet[dep].first(), dep);
+
+            int[] goldOrder = new int[1 + deps.size()];
+            i = 0;
+            for (int dep : changedOrder.keySet())
+                goldOrder[i++] = changedOrder.get(dep);
+
+            ContextInstance goldContext = new ContextInstance(head, goldOrder, sourceTree);
+
+            trainData.add(new TrainData(origContext, goldContext, posOrderFrequencyDic, topK));
+        }
+
+        return trainData;
     }
 
 
