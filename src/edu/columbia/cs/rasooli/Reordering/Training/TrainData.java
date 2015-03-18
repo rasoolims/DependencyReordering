@@ -2,7 +2,6 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.Pair;
 
 import java.util.*;
 
@@ -18,13 +17,11 @@ public class TrainData {
     ContextInstance goldInstance;
     ContextInstance originalInstance;
     ArrayList<String> goldFeatures;
-    ArrayList<ContextInstance> candidates;
 
-    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
+    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance) {
         this.originalInstance = originalInstance;
         this.goldInstance = goldInstance;
         this.goldFeatures=goldInstance.extractMainFeatures();
-        candidates= originalInstance.getPossibleContexts(posOrderFrequencyDic, topK);
     }
 
 
@@ -66,8 +63,8 @@ public class TrainData {
         return posOrderMap;
     }
     
-    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
-        ArrayList<TrainData> trainData = new ArrayList<TrainData>();
+    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data) {
+        ArrayList<TrainData> trainData = new ArrayList<TrainData>(3*data.size());
         int numOfChangedOrders = 0;
         int numOfChangedSentences = 0;
         System.err.print("Constructing candidates for data...");
@@ -109,7 +106,7 @@ public class TrainData {
                     numOfChangedOrders++;
                     changed = true;
                 }
-                trainData.add(new TrainData(origContext, goldContext,posOrderFrequencyDic,topK));
+                trainData.add(new TrainData(origContext, goldContext));
             }
             if (changed)
                 numOfChangedSentences++;

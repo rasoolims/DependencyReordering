@@ -3,7 +3,6 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,7 +15,7 @@ import java.util.HashMap;
  */
 
 public class Trainer {
-    public static void trainWithPerceptron(ArrayList<TrainData> trainingData, ArrayList<TrainData> devData, AveragedPerceptron classifier , int maxIter, String modelPath) throws Exception {
+    public static void trainWithPerceptron(ArrayList<TrainData> trainingData, ArrayList<TrainData> devData, AveragedPerceptron classifier , int maxIter, String modelPath, HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {
         System.err.println("Training started: "+trainingData.size()+" training instance and "+devData.size()+" dev instances ...");
         
         for(int i=0;i<maxIter;i++) {
@@ -29,7 +28,7 @@ public class Trainer {
                ContextInstance bestCandidate = null;
                 ArrayList<String>   bestFeats=null;
                 
-               for (ContextInstance candidate : trainData.candidates) {
+               for (ContextInstance candidate : trainData.originalInstance.getPossibleContexts(posOrderFrequencyDic,topK)) {
                    ArrayList<String>   features = candidate.extractMainFeatures();
                    float score = classifier.score(features, false);
                    if (score > bestScore) {
@@ -70,8 +69,7 @@ public class Trainer {
             System.err.print("Correct prediction: "+correctPredictions+"\n");
             
             classifier.saveModel(modelPath+"_iter"+(i+1));
-            
-            
+
             count=0;
             correct=0;
             Classifier decodeClassifier= AveragedPerceptron.loadModel(modelPath+"_iter"+(i+1)) ;
@@ -80,7 +78,7 @@ public class Trainer {
                 float bestScore = Float.NEGATIVE_INFINITY;
                 ContextInstance bestCandidate = null;
 
-                for (ContextInstance candidate : data.candidates) {
+                for (ContextInstance candidate : data.originalInstance.getPossibleContexts(posOrderFrequencyDic,topK)) {
                     ArrayList<String> features = candidate.extractMainFeatures();
                     float score = decodeClassifier.score(features, true);
                     if (score > bestScore) {
@@ -97,7 +95,6 @@ public class Trainer {
             System.err.print(count+"\n");
             correctPredictions =100f*correct/count;
             System.err.print("Correct  dev prediction: "+correctPredictions+"\n");
-
         }
     }
 }

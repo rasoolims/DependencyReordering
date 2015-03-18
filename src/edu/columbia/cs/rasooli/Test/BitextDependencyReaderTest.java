@@ -32,9 +32,9 @@ class BitextDependencyReaderTest {
         ArrayList<BitextDependency> data = testReadFromBitext(p1, p2,p3 );
         ArrayList<BitextDependency> devBitext = testReadFromBitext(p4, p5,p3 );
         HashMap<String,Integer> posOrderMap=TrainData.constructPosOrderFrequency(data);
-      ArrayList<TrainData> trainingData = TrainData.getAllPossibleTrainData(data, posOrderMap, 20);
-        ArrayList<TrainData> devData = TrainData.getAllPossibleTrainData(devBitext, posOrderMap, 20);
-        Trainer.trainWithPerceptron(trainingData,devData,new AveragedPerceptron(),10,p6);
+      ArrayList<TrainData> trainingData = TrainData.getAllPossibleTrainData(data);
+        ArrayList<TrainData> devData = TrainData.getAllPossibleTrainData(devBitext);
+        Trainer.trainWithPerceptron(trainingData, devData, new AveragedPerceptron(), 10, p6, posOrderMap, 20);
         System.out.println("test successful " + data.size());
     }
 
