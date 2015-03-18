@@ -16,41 +16,41 @@ public class AdaGrad extends Classifier {
     double learningRate;
     double ridge;
 
-    HashMap<String,Double> gDiag;
+    HashMap<String, Double> gDiag;
 
-    public AdaGrad(){
+    public AdaGrad() {
         super();
-        weights=new HashMap<String, Double>();
-        gDiag=new HashMap<String, Double>();
+        weights = new HashMap<String, Double>();
+        gDiag = new HashMap<String, Double>();
     }
 
-    public AdaGrad(double learningRate,double ridge){
+    public AdaGrad(double learningRate, double ridge) {
         this();
-        this.learningRate=learningRate;
-        this.ridge=ridge;
+        this.learningRate = learningRate;
+        this.ridge = ridge;
     }
 
     @Override
-    public void updateWeight(String feature, double change) {
-        if(gDiag.containsKey(feature))
-            gDiag.put(feature,gDiag.get(feature)+Math.pow(change,2));
+    public void updateWeight(String feature, float change) {
+        if (gDiag.containsKey(feature))
+            gDiag.put(feature, gDiag.get(feature) + Math.pow(change, 2));
         else
-            gDiag.put(feature,Math.pow(change,2));
+            gDiag.put(feature, Math.pow(change, 2));
 
-        double newValue=0;
-        if(weights.containsKey(feature))
-            newValue=weights.get(feature);
+        double newValue = 0;
+        if (weights.containsKey(feature))
+            newValue = weights.get(feature);
 
-        newValue+=learningRate*(1.0/(ridge+Math.sqrt(gDiag.get(feature))))*change;
-        weights.put(feature,newValue);
+        newValue += learningRate * (1.0 / (ridge + Math.sqrt(gDiag.get(feature)))) * change;
+        weights.put(feature, newValue);
     }
 
     @Override
-    public double score(ArrayList<String> features, boolean decode) {
-        double value=0.0;
-        for(String feat:features)
-            if(weights.containsKey(feat))
-                value+=weights.get(feat);
+    public float score(ArrayList<String> features, boolean decode) {
+        float value = 0.0f;
+        for (String feat : features)
+            if (weights.containsKey(feat))
+                value += weights.get(feat);
         return value;
     }
 
@@ -67,8 +67,7 @@ public class AdaGrad extends Classifier {
         return weights.size();
     }
 
-    @Override
-    public Classifier loadModel(String modelPath) throws Exception {
+    public static Classifier loadModel(String modelPath) throws Exception {
         ObjectInputStream reader = new ObjectInputStream(new FileInputStream(modelPath));
         HashMap<String, Double> weights = (HashMap<String, Double>) reader.readObject();
 

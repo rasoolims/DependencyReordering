@@ -10,7 +10,7 @@ package edu.columbia.cs.rasooli.Reordering.Structures;
 
 public class Word {
     int realIndex;
-    
+
     String wordForm;
     String fPos;
     String cPos;
