@@ -34,7 +34,7 @@ class BitextDependencyReaderTest {
         HashMap<String,Integer> posOrderMap=TrainData.constructPosOrderFrequency(data);
       ArrayList<TrainData> trainingData = TrainData.getAllPossibleTrainData(data, posOrderMap, 20);
         ArrayList<TrainData> devData = TrainData.getAllPossibleTrainData(devBitext, posOrderMap, 20);
-        Trainer.train(trainingData,devData,new AveragedPerceptron(),10,p6);
+        Trainer.trainWithPerceptron(trainingData,devData,new AveragedPerceptron(),10,p6);
         System.out.println("test successful " + data.size());
     }
 

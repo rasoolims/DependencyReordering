@@ -38,10 +38,11 @@ public class AveragedPerceptron extends Classifier implements Serializable {
 
     @Override
     public void saveModel(String modelPath) throws  Exception{
-        HashMap<String, Double> finalAverageWeight=new  HashMap<String, Double>(avgWeights.size());
+        System.err.print("Writing model to the file...");
+        HashMap<String, Float> finalAverageWeight=new  HashMap<String, Float>(avgWeights.size());
 
         for(String feat:weights.keySet()){
-            double newValue=  weights.get(feat)-(avgWeights.get(feat)/iteration);
+            float newValue=  weights.get(feat)-(avgWeights.get(feat)/iteration);
             if(newValue!=0.0)
                 finalAverageWeight.put(feat,newValue);
         }
@@ -49,6 +50,7 @@ public class AveragedPerceptron extends Classifier implements Serializable {
         writer.writeObject(finalAverageWeight);
         writer.flush();
         writer.close();
+        System.err.print("done\n");
     }
 
     public static Classifier loadModel(String modelPath) throws  Exception {

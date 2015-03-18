@@ -16,7 +16,7 @@ import java.util.HashMap;
  */
 
 public class Trainer {
-    public static void train(ArrayList<TrainData> trainingData, ArrayList<TrainData> devData, Classifier classifier , int maxIter, String modelPath) throws Exception {
+    public static void trainWithPerceptron(ArrayList<TrainData> trainingData, ArrayList<TrainData> devData, AveragedPerceptron classifier , int maxIter, String modelPath) throws Exception {
         System.err.println("Training started: "+trainingData.size()+" training instance and "+devData.size()+" dev instances ...");
         
         for(int i=0;i<maxIter;i++) {
@@ -59,6 +59,8 @@ public class Trainer {
                }  else
                correct++;
                 
+               classifier.incrementIteration();
+                
                 count++;
                 if(count%1000==0)
                     System.err.print(count+"...");
@@ -73,6 +75,7 @@ public class Trainer {
             count=0;
             correct=0;
             Classifier decodeClassifier= AveragedPerceptron.loadModel(modelPath+"_iter"+(i+1)) ;
+            System.err.print("decoding classifier size: "+decodeClassifier.size()+"\n");
             for (TrainData data : devData) {
                 float bestScore = Float.NEGATIVE_INFINITY;
                 ContextInstance bestCandidate = null;
@@ -85,7 +88,7 @@ public class Trainer {
                         bestCandidate = candidate;
                     }
                 }
-                if (!bestCandidate.equals(data.getGoldInstance()))
+                if (bestCandidate.equals(data.getGoldInstance()))
                     correct++;
                 count++;
                 if(count%1000==0)
