@@ -118,18 +118,30 @@ public class DependencyTree {
                     if (dep == head) {
                         newOrder[currentIndex] = order[dep];
                         newIndices[order[dep]] = currentIndex;
-                        currentIndex++;
                     } else {
                         HashSet<Integer> allSub = getAllInSubtree(dep);
                         TreeSet<Integer> orderedSub = new TreeSet<Integer>();
                         for (int d : allSub)
                             orderedSub.add(indices[d]);
                         for (int d : orderedSub) {
-                            newOrder[currentIndex] = order[d];
+                            try {
+                                newOrder[currentIndex] = order[d];
+                            }catch (Exception ex){
+                                System.out.print(order.length+"\t"+d+"\t"+currentIndex+"\t"+newOrder.length+"\t"+newIndices.length+"\n");
+                                for(int ik=0;ik<indices.length;ik++)
+                                    System.out.println(ik+" : "+indices[ik]);
+                                for(int ik=0;ik<order.length;ik++)
+                                    System.out.println(ik+" : "+order[ik]);
+                                for (int dx : allSub)
+                                    System.out.println(dx + " : " + indices[dx]);
+
+                                ex.printStackTrace();
+                                System.exit(1);
+                            }
                             newIndices[order[d]] = currentIndex;
-                            currentIndex++;
                         }
                     }
+                    currentIndex++;
                 }
                 nextIndex = i + allHeadSubtree.size();
                 break;
@@ -170,5 +182,10 @@ public class DependencyTree {
             else
             builder.append(words[i].fPos).append("|");
         return builder.toString();
+    }
+    
+    public int size(){
+        return words.length;
+        
     }
 }

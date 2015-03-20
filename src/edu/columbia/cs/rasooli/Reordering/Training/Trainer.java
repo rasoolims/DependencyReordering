@@ -2,6 +2,7 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
+import edu.columbia.cs.rasooli.Reordering.Decoding.Reorderer;
 import edu.columbia.cs.rasooli.Reordering.FileManagement.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
@@ -131,6 +132,16 @@ public class Trainer {
                             bestFeats=features;
                         }
                     }
+                    
+                    //adding gold instance as well
+                    ArrayList<String>   features =   trainData.getGoldInstance().extractMainFeatures();
+                    float score = classifier.score(features, false);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestCandidate = trainData.getGoldInstance();
+                        bestFeats=features;
+                    }
+                    
 
                     // perceptron update
                     if (!bestCandidate.equals(trainData.getGoldInstance())) {
@@ -170,6 +181,7 @@ public class Trainer {
             Classifier decodeClassifier= AveragedPerceptron.loadModel(modelPath+"_iter"+(i+1)) ;
             System.err.print("decoding classifier size: "+decodeClassifier.size()+"\n");
 
+            Reorderer reorderer=new Reorderer(decodeClassifier,posOrderFrequencyDic);
 
             BufferedReader devTreeReader=new BufferedReader(new FileReader(devTreePath));
             BufferedReader devIntersectionReader=new BufferedReader(new FileReader(devIntersectionPath));
@@ -192,7 +204,11 @@ public class Trainer {
                     if(count%1000==0)
                         System.err.print(count+"...");
                 }
+                
+                reorderer.reorder(bitextDependency.getSourceTree(),topK);
             }
+            
+            
 
             System.err.print(count+"\n");
             correctPredictions =100f*correct/count;
