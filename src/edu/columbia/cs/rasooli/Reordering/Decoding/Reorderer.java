@@ -1,13 +1,16 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
+import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.TreeSet;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -20,13 +23,17 @@ import java.util.TreeSet;
 public class Reorderer {
     Classifier classifier;
     HashMap<String,Integer> posOrderFrequencyDic;
+    int topK;
+    HashMap<String,String> universalMap;
 
-    public Reorderer(Classifier classifier, HashMap<String, Integer> posOrderFrequencyDic) {
+    public Reorderer(Classifier classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK) {
         this.classifier = classifier;
         this.posOrderFrequencyDic = posOrderFrequencyDic;
+        this.universalMap=universalMap;
+        this.topK=topK;
     }
 
-    public void reorder(DependencyTree tree, int topK){
+    public DependencyTree reorder(DependencyTree tree){
         HashSet<Integer> heads=new HashSet<Integer>();
         for(int h=1;h<tree.size();h++)
             if(tree.hasDep(h))
@@ -62,5 +69,23 @@ public class Reorderer {
             reorderingInstances.add(bestCandidate);
         }
         
+        DependencyTree currentTree=tree;
+        for(ContextInstance instance:reorderingInstances) {
+            currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
+        }
+        
+        return currentTree;
+    }
+    
+    public void decode(String inputFile,String outputFile) throws  Exception {
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+
+        DependencyTree tree;
+        while ((tree = DependencyReader.readNextBitextDependency(reader, universalMap)) != null) {
+            writer.write(reorder(tree).toConllOutput());
+        }
+        writer.flush();
+        writer.close();
     }
 }

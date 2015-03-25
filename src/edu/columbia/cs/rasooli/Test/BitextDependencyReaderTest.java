@@ -1,14 +1,12 @@
 package edu.columbia.cs.rasooli.Test;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
-import edu.columbia.cs.rasooli.Reordering.FileManagement.BitextDependencyReader;
+import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
-import edu.columbia.cs.rasooli.Reordering.Training.TrainData;
 import edu.columbia.cs.rasooli.Reordering.Training.Trainer;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 class BitextDependencyReaderTest {
     public static void main(String[] args) throws Exception {

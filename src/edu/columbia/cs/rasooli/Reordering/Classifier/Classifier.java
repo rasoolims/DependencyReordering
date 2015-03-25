@@ -27,4 +27,8 @@ public abstract class Classifier {
     }
 
     public abstract int size();
+
+    public int getIteration() {
+        return iteration;
+    }
 }

@@ -224,6 +224,18 @@ public class ContextInstance implements Comparable {
         return features;
     }
 
+    public static int[] getPossibilities() {
+        return possibilities;
+    }
+
+    public DependencyTree getTree() {
+        return tree;
+    }
+
+    public int getHeadIndex() {
+        return headIndex;
+    }
+
     //region compareTo
     @Override
     public int compareTo(Object o) {
@@ -241,6 +253,7 @@ public class ContextInstance implements Comparable {
         return 0;
     }
 
+    
     @Override
     public boolean equals(Object o) {
         return compareTo(o) == 0;

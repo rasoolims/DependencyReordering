@@ -1,4 +1,4 @@
-package edu.columbia.cs.rasooli.Reordering.FileManagement;
+package edu.columbia.cs.rasooli.Reordering.IO;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;

@@ -3,9 +3,10 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.Decoding.Reorderer;
-import edu.columbia.cs.rasooli.Reordering.FileManagement.BitextDependencyReader;
+import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
+import edu.columbia.cs.rasooli.Reordering.Structures.Info;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -174,45 +175,44 @@ public class Trainer {
             float correctPredictions =100f*correct/count;
             System.err.print("Correct prediction: "+correctPredictions+"\n");
 
-            classifier.saveModel(modelPath+"_iter"+(i+1));
+            Info info=new Info(classifier,posOrderFrequencyDic,universalMap,topK);
+            info.saveModel(modelPath + "_iter" + (i + 1));
 
-            count=0;
-            correct=0;
-            Classifier decodeClassifier= AveragedPerceptron.loadModel(modelPath+"_iter"+(i+1)) ;
-            System.err.print("decoding classifier size: "+decodeClassifier.size()+"\n");
+            if(!devTreePath.equals("")) {
+                count = 0;
+                correct = 0;
+                AveragedPerceptron decodeClassifier = new AveragedPerceptron();
+                decodeClassifier.setAvgWeights(info.getFinalWeights());
+                System.err.print("decoding classifier size: " + decodeClassifier.size() + "\n");
 
-            Reorderer reorderer=new Reorderer(decodeClassifier,posOrderFrequencyDic);
+                BufferedReader devTreeReader = new BufferedReader(new FileReader(devTreePath));
+                BufferedReader devIntersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
+                while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(devTreeReader, devIntersectionReader, universalMap)) != null) {
+                    for (TrainData data : bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic, topK)) {
+                        float bestScore = Float.NEGATIVE_INFINITY;
+                        ContextInstance bestCandidate = null;
 
-            BufferedReader devTreeReader=new BufferedReader(new FileReader(devTreePath));
-            BufferedReader devIntersectionReader=new BufferedReader(new FileReader(devIntersectionPath));
-            while((bitextDependency=BitextDependencyReader.readNextBitextDependency(devTreeReader,devIntersectionReader,universalMap))!=null){
-                for(TrainData data:bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic,topK)){
-                    float bestScore = Float.NEGATIVE_INFINITY;
-                    ContextInstance bestCandidate = null;
-
-                    for (ContextInstance candidate : data.originalInstance.getPossibleContexts(posOrderFrequencyDic,topK)) {
-                        ArrayList<String> features = candidate.extractMainFeatures();
-                        float score = decodeClassifier.score(features, true);
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestCandidate = candidate;
+                        for (ContextInstance candidate : data.originalInstance.getPossibleContexts(posOrderFrequencyDic, topK)) {
+                            ArrayList<String> features = candidate.extractMainFeatures();
+                            float score = decodeClassifier.score(features, true);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestCandidate = candidate;
+                            }
                         }
+                        if (bestCandidate.equals(data.getGoldInstance()))
+                            correct++;
+                        count++;
+                        if (count % 1000 == 0)
+                            System.err.print(count + "...");
                     }
-                    if (bestCandidate.equals(data.getGoldInstance()))
-                        correct++;
-                    count++;
-                    if(count%1000==0)
-                        System.err.print(count+"...");
                 }
-                
-                reorderer.reorder(bitextDependency.getSourceTree(),topK);
-            }
-            
-            
 
-            System.err.print(count+"\n");
-            correctPredictions =100f*correct/count;
-            System.err.print("Correct  dev prediction: "+correctPredictions+"\n");
+
+                System.err.print(count + "\n");
+                correctPredictions = 100f * correct / count;
+                System.err.print("Correct  dev prediction: " + correctPredictions + "\n");
+            }
         }
     }
 

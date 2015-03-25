@@ -1,5 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
+import apple.laf.JRSUIUtils;
+
 import java.util.HashSet;
 import java.util.TreeSet;
 
@@ -116,8 +118,9 @@ public class DependencyTree {
                 for (int j = 0; j < instanceOrder.length; j++) {
                     int dep = instanceOrder[j];
                     if (dep == head) {
-                        newOrder[currentIndex] = order[dep];
-                        newIndices[order[dep]] = currentIndex;
+                        newOrder[currentIndex] = dep;
+                        newIndices[dep] = currentIndex;
+                        currentIndex++;
                     } else {
                         HashSet<Integer> allSub = getAllInSubtree(dep);
                         TreeSet<Integer> orderedSub = new TreeSet<Integer>();
@@ -139,23 +142,87 @@ public class DependencyTree {
                                 System.exit(1);
                             }
                             newIndices[order[d]] = currentIndex;
+                            currentIndex++;
                         }
                     }
-                    currentIndex++;
                 }
-                nextIndex = i + allHeadSubtree.size();
+                nextIndex = allHeadSubtree.size()+i;
                 break;
             } else {
                 newOrder[i] = order[i];
-                newIndices[i] = indices[i];
+                newIndices[ order[i]] =i;
             }
         }
 
         for (int i = nextIndex; i < order.length; i++) {
             newOrder[i] = order[i];
-            newIndices[i] = indices[i];
+            newIndices[  order[i] ] = i;
         }
 
+        //sanity check
+        TreeSet<Integer> set=new TreeSet<Integer>();
+        for(int i=0;i<newOrder.length;i++)
+            set.add(newOrder[i]);
+
+        TreeSet<Integer> iset=new TreeSet<Integer>();
+        for(int i=0;i<newIndices.length;i++)
+            iset.add(newIndices[i]);
+        
+        if(set.size()<newOrder.length || iset.size()<newIndices.length) {
+            System.out.println("ERROR!");
+            newOrder = new int[order.length];
+            newIndices = new int[indices.length];
+
+             nextIndex = order.length;
+            for (int i = 0; i < order.length; i++) {
+                if (allHeadSubtree.contains(order[i])) {
+                    int currentIndex = i;
+                    for (int j = 0; j < instanceOrder.length; j++) {
+                        int dep = instanceOrder[j];
+                        if (dep == head) {
+                            newOrder[currentIndex] = dep;
+                            newIndices[dep] = currentIndex;
+                            currentIndex++;
+                        } else {
+                            HashSet<Integer> allSub = getAllInSubtree(dep);
+                            TreeSet<Integer> orderedSub = new TreeSet<Integer>();
+                            for (int d : allSub)
+                                orderedSub.add(indices[d]);
+                            for (int d : orderedSub) {
+                                try {
+                                    newOrder[currentIndex] = order[d];
+                                }catch (Exception ex){
+                                    System.out.print(order.length+"\t"+d+"\t"+currentIndex+"\t"+newOrder.length+"\t"+newIndices.length+"\n");
+                                    for(int ik=0;ik<indices.length;ik++)
+                                        System.out.println(ik+" : "+indices[ik]);
+                                    for(int ik=0;ik<order.length;ik++)
+                                        System.out.println(ik+" : "+order[ik]);
+                                    for (int dx : allSub)
+                                        System.out.println(dx + " : " + indices[dx]);
+
+                                    ex.printStackTrace();
+                                    System.exit(1);
+                                }
+                                newIndices[order[d]] = currentIndex;
+                                currentIndex++;
+                            }
+                        }
+                    }
+                    nextIndex = allHeadSubtree.size()+i;
+                    break;
+                } else {
+                    newOrder[i] = order[i];
+                    newIndices[ order[i] ] = i;
+                }
+            }
+
+            for (int i = nextIndex; i < order.length; i++) {
+                newOrder[i] = order[i];
+                newIndices[ order[i]] = i;
+            }
+
+        }
+        
         tree.order = newOrder;
         tree.indices = newIndices;
 
@@ -187,5 +254,25 @@ public class DependencyTree {
     public int size(){
         return words.length;
         
+    }
+    
+    public String toConllOutput(){
+        StringBuilder builder=new StringBuilder();
+        for(int j=1;j<getOrder().length;j++) {
+            int i=getOrder()[j];
+            String wordForm= getCurrentWord(i).getWordForm();
+            String pos=   getCurrentWord(i).getfPos();
+            String cpos=   getCurrentWord(i).getcPos();
+            int head=getCurrentIndex(getCurrentHead(i));
+            String label=getCurrentLabel(j);
+            String out=j+"\t"+wordForm+"\t"+wordForm+"\t"+pos+"\t"+cpos+ "\t_\t"+head+"\t"+label+"\t_\t_\n";
+            builder.append(out);
+        }
+        builder.append("\n");
+        return builder.toString();
+    }
+
+    public int[] getOrder() {
+        return order;
     }
 }

@@ -82,4 +82,16 @@ public class AveragedPerceptron extends Classifier implements Serializable {
     public int size(){
         return avgWeights.size();
     }
+
+    public HashMap<String, Float> getWeights() {
+        return weights;
+    }
+
+    public HashMap<String, Float> getAvgWeights() {
+        return avgWeights;
+    }
+
+    public void setAvgWeights(HashMap<String, Float> avgWeights) {
+        this.avgWeights = avgWeights;
+    }
 }
