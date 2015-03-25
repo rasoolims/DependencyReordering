@@ -118,7 +118,7 @@ public class BitextDependency {
         return sourceTree;
     }
     
-    public ArrayList<TrainData> getAllPossibleTrainData(HashMap<String,Integer> posOrderFrequencyDic, int topK) {
+    public ArrayList<TrainData> getAllPossibleTrainData(HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {
         ArrayList<TrainData> trainData = new ArrayList<TrainData>();
         for (int head : getTrainableHeads()) {
             HashSet<Integer> deps = sourceTree.getDependents(head);

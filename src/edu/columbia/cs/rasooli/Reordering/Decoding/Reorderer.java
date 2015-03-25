@@ -33,7 +33,7 @@ public class Reorderer {
         this.topK=topK;
     }
 
-    public DependencyTree reorder(DependencyTree tree){
+    public DependencyTree reorder(DependencyTree tree) throws Exception {
         HashSet<Integer> heads=new HashSet<Integer>();
         for(int h=1;h<tree.size();h++)
             if(tree.hasDep(h))

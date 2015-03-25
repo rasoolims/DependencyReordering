@@ -119,57 +119,61 @@ public class Trainer {
 
             BitextDependency bitextDependency;
             while((bitextDependency=BitextDependencyReader.readNextBitextDependency(treeReader,intersectionReader,universalMap))!=null){
-                for(TrainData trainData:bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic,topK)){
-                    float bestScore = Float.NEGATIVE_INFINITY;
-                    ContextInstance bestCandidate = null;
-                    ArrayList<String>   bestFeats=null;
+               try {
+                   for (TrainData trainData : bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic, topK)) {
+                       float bestScore = Float.NEGATIVE_INFINITY;
+                       ContextInstance bestCandidate = null;
+                       ArrayList<String> bestFeats = null;
 
-                    for (ContextInstance candidate : trainData.originalInstance.getPossibleContexts(posOrderFrequencyDic,topK)) {
-                        ArrayList<String>   features = candidate.extractMainFeatures();
-                        float score = classifier.score(features, false);
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestCandidate = candidate;
-                            bestFeats=features;
-                        }
-                    }
-                    
-                    //adding gold instance as well
-                    ArrayList<String>   features =   trainData.getGoldInstance().extractMainFeatures();
-                    float score = classifier.score(features, false);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestCandidate = trainData.getGoldInstance();
-                        bestFeats=features;
-                    }
-                    
+                       for (ContextInstance candidate : trainData.originalInstance.getPossibleContexts(posOrderFrequencyDic, topK)) {
+                           ArrayList<String> features = candidate.extractMainFeatures();
+                           float score = classifier.score(features, false);
+                           if (score > bestScore) {
+                               bestScore = score;
+                               bestCandidate = candidate;
+                               bestFeats = features;
+                           }
+                       }
 
-                    // perceptron update
-                    if (!bestCandidate.equals(trainData.getGoldInstance())) {
-                        HashMap<String, Integer> changedFeats = new HashMap<String, Integer>();
-                        for (String feat : trainData.goldFeatures)
-                            changedFeats.put(feat, 1);
-                        for (String feat : bestFeats) {
-                            if (changedFeats.containsKey(feat))
-                                changedFeats.put(feat, changedFeats.get(feat) - 1);
-                            else
-                                changedFeats.put(feat, -1);
-                        }
-                        for (String feat : changedFeats.keySet()) {
-                            int change = changedFeats.get(feat);
-                            if (change != 0) {
-                                classifier.updateWeight(feat, change);
-                            }
-                        }
-                    }  else
-                        correct++;
+                       //adding gold instance as well
+                       ArrayList<String> features = trainData.getGoldInstance().extractMainFeatures();
+                       float score = classifier.score(features, false);
+                       if (score > bestScore) {
+                           bestScore = score;
+                           bestCandidate = trainData.getGoldInstance();
+                           bestFeats = features;
+                       }
 
-                    classifier.incrementIteration();
 
-                    count++;
-                    if(count%1000==0)
-                        System.err.print(count+"...");  
-                }
+                       // perceptron update
+                       if (!bestCandidate.equals(trainData.getGoldInstance())) {
+                           HashMap<String, Integer> changedFeats = new HashMap<String, Integer>();
+                           for (String feat : trainData.goldFeatures)
+                               changedFeats.put(feat, 1);
+                           for (String feat : bestFeats) {
+                               if (changedFeats.containsKey(feat))
+                                   changedFeats.put(feat, changedFeats.get(feat) - 1);
+                               else
+                                   changedFeats.put(feat, -1);
+                           }
+                           for (String feat : changedFeats.keySet()) {
+                               int change = changedFeats.get(feat);
+                               if (change != 0) {
+                                   classifier.updateWeight(feat, change);
+                               }
+                           }
+                       } else
+                           correct++;
+
+                       classifier.incrementIteration();
+
+                       count++;
+                       if (count % 1000 == 0)
+                           System.err.print(count + "...");
+                   }
+               }catch (Exception ex){
+                   
+               }
             }
             System.err.print(count+"\n");
             float correctPredictions =100f*correct/count;

@@ -92,7 +92,7 @@ public class DependencyTree {
         return deps[head];
     }
 
-    public DependencyTree getFullOrder(int[] instanceOrder, int head) {
+    public DependencyTree getFullOrder(int[] instanceOrder, int head) throws Exception {
         DependencyTree tree = new DependencyTree(words, heads, labels, indices, order);
 
         HashSet<Integer> allHeadSubtree = getAllInSubtree(head);
@@ -130,7 +130,9 @@ public class DependencyTree {
                             try {
                                 newOrder[currentIndex] = order[d];
                             }catch (Exception ex){
-                                System.out.print(order.length+"\t"+d+"\t"+currentIndex+"\t"+newOrder.length+"\t"+newIndices.length+"\n");
+                                System.out.print("\n"+toConllOutput());
+                                
+                                System.out.print(order.length+"\t"+dep+"\t"+d+"\t"+currentIndex+"\t"+newOrder.length+"\t"+newIndices.length+"\n");
                                 for(int ik=0;ik<indices.length;ik++)
                                     System.out.println(ik+" : "+indices[ik]);
                                 for(int ik=0;ik<order.length;ik++)
@@ -139,7 +141,8 @@ public class DependencyTree {
                                     System.out.println(dx + " : " + indices[dx]);
 
                                 ex.printStackTrace();
-                                System.exit(1);
+                                throw new Exception(ex);
+                            //    System.exit(1);
                             }
                             newIndices[order[d]] = currentIndex;
                             currentIndex++;
@@ -170,6 +173,7 @@ public class DependencyTree {
         
         if(set.size()<newOrder.length || iset.size()<newIndices.length) {
             System.out.println("ERROR!");
+           /*
             newOrder = new int[order.length];
             newIndices = new int[indices.length];
 
@@ -220,7 +224,7 @@ public class DependencyTree {
                 newOrder[i] = order[i];
                 newIndices[ order[i]] = i;
             }
-
+           */
         }
         
         tree.order = newOrder;

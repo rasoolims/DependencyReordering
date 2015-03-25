@@ -20,7 +20,7 @@ public class TrainData {
     ArrayList<String> goldFeatures;
     ArrayList<ContextInstance> candidates;
 
-    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
+    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {
         this.originalInstance = originalInstance;
         this.goldInstance = goldInstance;
         this.goldFeatures=goldInstance.extractMainFeatures();
@@ -30,7 +30,7 @@ public class TrainData {
 
 
 
-    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data, HashMap<String,Integer> posOrderFrequencyDic, int topK) {
+    public static ArrayList<TrainData> getAllPossibleTrainData(ArrayList<BitextDependency> data, HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {
         ArrayList<TrainData> trainData = new ArrayList<TrainData>(3*data.size());
         int numOfChangedOrders = 0;
         int numOfChangedSentences = 0;

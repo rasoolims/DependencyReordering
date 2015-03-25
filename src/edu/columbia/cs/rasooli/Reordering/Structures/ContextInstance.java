@@ -16,7 +16,7 @@ public class ContextInstance implements Comparable {
     int headIndex;
     int[] order;
 
-    public ContextInstance(int headIndex, int[] order, DependencyTree originalTree) {
+    public ContextInstance(int headIndex, int[] order, DependencyTree originalTree) throws Exception {
         this.headIndex = headIndex;
         this.order = order;
         this.tree = originalTree.getFullOrder(order, headIndex);
@@ -68,7 +68,7 @@ public class ContextInstance implements Comparable {
         return order;
     }
 
-    public ArrayList<ContextInstance> getPossibleContexts(HashMap<String,Integer> posOrderMap, int max) {
+    public ArrayList<ContextInstance> getPossibleContexts(HashMap<String,Integer> posOrderMap, int max) throws Exception {
         ArrayList<int[]> permutations = getAllPossibleContexts();
 
         TreeSet<PosOrderFrequency> mostFrequentOrderings=new TreeSet<PosOrderFrequency>();
