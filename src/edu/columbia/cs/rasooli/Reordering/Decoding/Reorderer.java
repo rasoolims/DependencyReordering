@@ -82,9 +82,14 @@ public class Reorderer {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 
         DependencyTree tree;
+        int count=0;
         while ((tree = DependencyReader.readNextBitextDependency(reader, universalMap)) != null) {
             writer.write(reorder(tree).toConllOutput());
+            count++;
+            if(count%100==0)
+                System.out.print(count + "...");
         }
+        System.out.print(count+"\n");
         writer.flush();
         writer.close();
     }

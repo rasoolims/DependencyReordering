@@ -203,7 +203,7 @@ public class Trainer {
                         if (bestCandidate.equals(data.getGoldInstance()))
                             correct++;
                         count++;
-                        if (count % 1000 == 0)
+                        if (count % 10000 == 0)
                             System.err.print(count + "...");
                     }
                 }
