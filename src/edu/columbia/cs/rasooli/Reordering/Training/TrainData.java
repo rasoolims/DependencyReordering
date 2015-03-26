@@ -16,7 +16,7 @@ import java.util.*;
 public class TrainData {
     ContextInstance goldInstance;
     ContextInstance originalInstance;
-    ArrayList<String> goldFeatures;
+    ArrayList<Object>[] goldFeatures;
     HashSet<ContextInstance> candidates;
 
     public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {

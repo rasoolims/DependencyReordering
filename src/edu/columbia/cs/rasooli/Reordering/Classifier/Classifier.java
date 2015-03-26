@@ -16,10 +16,6 @@ public abstract class Classifier {
         iteration = 1;
     }
 
-    public abstract void updateWeight(String feature, double change);
-
-    public abstract float score(ArrayList<String> features, boolean decode);
-
     public abstract void saveModel(String modelPath) throws Exception;
 
     public void incrementIteration() {

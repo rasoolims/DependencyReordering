@@ -129,19 +129,6 @@ public class DependencyTree {
                                 newOrder[currentIndex] = order[d];
                                 newIndices[order[d]] = currentIndex;
                             }catch (Exception ex){
-                               /*
-                                System.out.print("\n"+toConllOutput());
-                                
-                                System.out.print(order.length+"\t"+dep+"\t"+d+"\t"+currentIndex+"\t"+newOrder.length+"\t"+newIndices.length+"\n");
-                                for(int ik=0;ik<indices.length;ik++)
-                                    System.out.println(ik+" : "+indices[ik]);
-                                for(int ik=0;ik<order.length;ik++)
-                                    System.out.println(ik+" : "+order[ik]);
-                                for (int dx : allSub)
-                                    System.out.println(dx + " : " + indices[dx]);
-
-                                ex.printStackTrace();
-                                */
                                 throw new Exception(ex);
                             }
                             currentIndex++;

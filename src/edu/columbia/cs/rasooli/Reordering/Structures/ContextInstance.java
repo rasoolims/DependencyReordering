@@ -95,23 +95,33 @@ public class ContextInstance implements Comparable {
 
     }
 
-    public ArrayList<String> extractMainFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
+    public ArrayList<Object>[] extractMainFeatures() {
+        int size=324;
+        ArrayList<Object>[] features = new ArrayList[size];
+        for(int i=0;i<size;i++)
+            features[i]=new ArrayList<Object>();
 
         Word[] words = tree.words;
         int[] treeOrder = tree.order;
         int[] indices = tree.indices;
+        
+        int index=0;
 
         //region head feature
         Word headWord = words[headIndex];
-        features.add("head:word:" + headWord.wordForm);
-        features.add("head:cpos:" + headWord.cPos);
-        features.add("head:fpos:" + headWord.fPos);
+        features[index++].add(headWord.wordForm);
+        features[index++].add(headWord.cPos);
+        features[index++].add(headWord.fPos);
         //endregion
 
+        
+        int currIndex=index;
         for (int i = 0; i < order.length; i++) {
             if (order[i] == headIndex)
                 continue;
+            
+            index=currIndex;
+            
             //region children
             String position = "before";
             if (indices[order[i]] == indices[headIndex] - 1)
@@ -123,9 +133,9 @@ public class ContextInstance implements Comparable {
 
             Word child = words[order[i]];
 
-            features.add("children:word:" + position + ":" + child.wordForm);
-            features.add("children:cpos:" + position + ":" + child.cPos);
-            features.add("children:fpos:" + position + ":" + child.fPos);
+            features[index].add(position + ":" + child.wordForm);
+            features[index+1].add(position + ":" + child.cPos);
+            features[index+2].add(position + ":" + child.fPos);
             //endregion
 
             //region there is a gap with head
@@ -142,14 +152,15 @@ public class ContextInstance implements Comparable {
                 Word firstWord = words[first];
                 Word lastWord = words[last];
 
-                features.add("first_gap:word:" + firstWord.wordForm);
-                features.add("first_gap:cpos:" + firstWord.cPos);
-                features.add("first_gap:fpos:" + firstWord.fPos);
+                features[index+3].add(firstWord.wordForm);
+                features[index+4].add(firstWord.cPos);
+                features[index+5].add(firstWord.fPos);
 
-                features.add("last_gap:word:" + lastWord.wordForm);
-                features.add("last_gap:cpos:" + lastWord.cPos);
-                features.add("last_gap:fpos:" + lastWord.fPos);
+                features[index+6].add(lastWord.wordForm);
+                features[index+7].add(lastWord.cPos);
+                features[index+8].add(lastWord.fPos);
             }
+            index+=9;
             //endregion
 
             //region consecutive children
@@ -160,14 +171,15 @@ public class ContextInstance implements Comparable {
                 Word firstWord = words[first];
                 Word lastWord = words[last];
 
-                features.add("first_consec_gap:word:" + firstWord.wordForm);
-                features.add("first_consec_gap:cpos:" + firstWord.cPos);
-                features.add("first_consec_gap:fpos:" + firstWord.fPos);
+                features[index].add(firstWord.wordForm);
+                features[index+1].add(firstWord.cPos);
+                features[index+2].add(firstWord.fPos);
 
-                features.add("last_consec_gap:word:" + lastWord.wordForm);
-                features.add("last_consec_gap:cpos:" + lastWord.cPos);
-                features.add("last_consec_gap:fpos:" + lastWord.fPos);
+                features[index+3].add(lastWord.wordForm);
+                features[index+4].add(lastWord.cPos);
+                features[index+5].add(lastWord.fPos);
             }
+            index+=6;
             //endregion
         }
 
@@ -192,35 +204,42 @@ public class ContextInstance implements Comparable {
 
         if (headOrder > 0) {
             Word leftSibling = words[orderedSiblings[headOrder - 1]];
-            features.add("left_sibling:word:" + leftSibling.wordForm);
-            features.add("left_sibling:cpos:" + leftSibling.cPos);
-            features.add("left_sibling:fpos:" + leftSibling.fPos);
+            features[index].add( leftSibling.wordForm);
+            features[index+1].add(leftSibling.cPos);
+            features[index+2].add( leftSibling.fPos);
         } else {
-            features.add("left_sibling:word:NONE");
-            features.add("left_sibling:cpos:NONE");
-            features.add("left_sibling:fpos:NONE");
+            features[index].add("left_sibling:word:NONE");
+            features[index+1].add("left_sibling:cpos:NONE");
+            features[index+2].add("left_sibling:fpos:NONE");
         }
 
         if (headOrder < orderedSiblings.length - 1) {
             Word rightSibling = words[orderedSiblings[headOrder + 1]];
-            features.add("right_sibling:word:" + rightSibling.wordForm);
-            features.add("right_sibling:cpos:" + rightSibling.cPos);
-            features.add("right_sibling:fpos:" + rightSibling.fPos);
+            features[index+3].add( rightSibling.wordForm);
+            features[index+4].add(rightSibling.cPos);
+            features[index+5].add( rightSibling.fPos);
         } else {
-            features.add("right_sibling:word:NONE");
-            features.add("right_sibling:cpos:NONE");
-            features.add("right_sibling:fpos:NONE");
+            features[index+3].add("right_sibling:word:NONE");
+            features[index+4].add("right_sibling:cpos:NONE");
+            features[index+5].add("right_sibling:fpos:NONE");
         }
+        index+=6;
         //endregion
 
 
         //region bilexical features
-        int featLen = features.size();
-        for (i = 0; i < featLen; i++) {
-            for (int j = 0; j < featLen; j++) {
-                if (i == j)
-                    continue;
-                features.add(features.get(i) + "|" + features.get(j));
+        int l=index;
+        for(int f1=0;f1<l;f1++) {
+            int featLen = features[f1].size();
+            for(int f2=f1;f2<l;f2++){
+                int featLen2 = features[f2].size();
+                for (i = 0; i < featLen; i++) {
+                    for (int j = 0; j < featLen2; j++) {
+                        if(!(i==j && f1==f2))
+                            features[index].add(features[f1].get(i) + "|" + features[f2].get(j));
+                    }
+                }
+                index++;
             }
         }
         //endregion

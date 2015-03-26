@@ -12,10 +12,10 @@ import java.util.ArrayList;
 
 public class FeaturedInstance {
     ContextInstance instance;
-    ArrayList<String> features;
+    ArrayList<Object>[] features;
     double score;
 
-    public FeaturedInstance(ContextInstance instance, ArrayList<String> features, double score) {
+    public FeaturedInstance(ContextInstance instance, ArrayList<Object>[] features, double score) {
         this.instance = instance;
         this.features = features;
         this.score = score;
@@ -25,7 +25,7 @@ public class FeaturedInstance {
         return instance;
     }
 
-    public ArrayList<String> getFeatures() {
+    public ArrayList<Object>[] getFeatures() {
         return features;
     }
 

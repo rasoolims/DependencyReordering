@@ -27,7 +27,7 @@ public class ScoringThread implements Callable<FeaturedInstance> {
 
     @Override
     public FeaturedInstance call() throws Exception {
-        ArrayList<String> features = candidate.extractMainFeatures();
+        ArrayList<Object>[] features = candidate.extractMainFeatures();
         float score = classifier.score(features, isDecode);
         return new FeaturedInstance(candidate,features,score);
     }

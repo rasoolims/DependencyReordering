@@ -36,8 +36,6 @@ public class Trainer {
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
         CompletionService<FeaturedInstance> pool = new ExecutorCompletionService<FeaturedInstance>(executor);
 
-
-
         for(int i=0;i<maxIter;i++) {
             System.err.println("Iteration: "+(i+1)+"...");
             int count=0;
@@ -51,7 +49,7 @@ public class Trainer {
                    for (TrainData trainData : bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic, topK)) {
                        double bestScore = Double.NEGATIVE_INFINITY;
                        ContextInstance bestCandidate = null;
-                       ArrayList<String> bestFeats = null;
+                       ArrayList<Object>[] bestFeats = null;
                       HashSet<ContextInstance> candidates= trainData.originalInstance.getPossibleContexts(posOrderFrequencyDic, topK);
                        candidates.add(trainData.getGoldInstance());
                        
@@ -72,19 +70,21 @@ public class Trainer {
 
                        // perceptron update
                        if (!bestCandidate.equals(trainData.getGoldInstance())) {
-                           HashMap<String, Integer> changedFeats = new HashMap<String, Integer>();
-                           for (String feat : trainData.goldFeatures)
-                               changedFeats.put(feat, 1);
-                           for (String feat : bestFeats) {
-                               if (changedFeats.containsKey(feat))
-                                   changedFeats.put(feat, changedFeats.get(feat) - 1);
-                               else
-                                   changedFeats.put(feat, -1);
-                           }
-                           for (String feat : changedFeats.keySet()) {
-                               int change = changedFeats.get(feat);
-                               if (change != 0) {
-                                   classifier.updateWeight(feat, change);
+                           for (int k = 0; k < bestFeats.length; k++) {
+                               HashMap<Object, Integer> changedFeats = new HashMap<Object, Integer>();
+                               for (Object feat : trainData.goldFeatures[k])
+                                   changedFeats.put(feat, 1);
+                               for (Object feat : bestFeats[k]) {
+                                   if (changedFeats.containsKey(feat))
+                                       changedFeats.put(feat, changedFeats.get(feat) - 1);
+                                   else
+                                       changedFeats.put(feat, -1);
+                               }
+                               for (Object feat : changedFeats.keySet()) {
+                                   int change = changedFeats.get(feat);
+                                   if (change != 0) {
+                                       classifier.updateWeight(k, feat, change);
+                                   }
                                }
                            }
                        } else
@@ -97,7 +97,7 @@ public class Trainer {
                            System.err.print(count + "...");
                    }
                }catch (Exception ex){
-                   
+                   System.out.print("");
                }
             }
             System.err.print(count+"\n");
@@ -110,7 +110,7 @@ public class Trainer {
             if(!devTreePath.equals("")) {
                 count = 0;
                 correct = 0;
-                AveragedPerceptron decodeClassifier = new AveragedPerceptron();
+                AveragedPerceptron decodeClassifier = new AveragedPerceptron(classifier.getWeights().length);
                 decodeClassifier.setAvgWeights(info.getFinalWeights());
                 System.err.print("decoding classifier size: " + decodeClassifier.size() + "\n");
 

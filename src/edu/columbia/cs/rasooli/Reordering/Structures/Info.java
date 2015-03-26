@@ -16,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
  */
 
 public class Info {
-    HashMap<String, Double> finalWeights;
+    HashMap<Object, Double>[] finalWeights;
     HashMap<String,String> universalPosMap;
     int topK;
     HashMap<String,Integer> posOrderFrequencyDic;
@@ -26,12 +26,15 @@ public class Info {
         this.topK=topK;
         this.posOrderFrequencyDic=posOrderFrequencyDic;
 
-        finalWeights = new HashMap<String, Double>(perceptron.getAvgWeights().size());
+        finalWeights = new HashMap[perceptron.getWeights().length];
 
-        for(String feat:perceptron.getWeights().keySet()){
-            double newValue = perceptron.getWeights().get(feat) - (perceptron.getAvgWeights().get(feat) / perceptron.getIteration());
-            if(newValue!=0.0)
-                finalWeights.put(feat,newValue);
+        for(int i=0;i<finalWeights.length;i++) {
+            finalWeights[i]=new HashMap<Object, Double>();
+            for (Object feat : perceptron.getWeights()[i].keySet()) {
+                double newValue = perceptron.getWeights()[i].get(feat) - (perceptron.getAvgWeights()[i].get(feat) / perceptron.getIteration());
+                if (newValue != 0.0)
+                    finalWeights[i].put(feat, newValue);
+            }
         }
     }
 
@@ -41,7 +44,7 @@ public class Info {
         GZIPInputStream gz = new GZIPInputStream(fos);
 
         ObjectInputStream reader = new ObjectInputStream(gz);
-        finalWeights = (HashMap<String, Double>) reader.readObject();
+        finalWeights = (HashMap<Object, Double>[]) reader.readObject();
         posOrderFrequencyDic = (HashMap<String, Integer>) reader.readObject();
         topK = (Integer) reader.readObject();
         universalPosMap = ( HashMap<String,String>) reader.readObject();
@@ -61,7 +64,7 @@ public class Info {
         System.err.print("done\n");
     }
 
-    public HashMap<String, Double> getFinalWeights() {
+    public HashMap<Object, Double>[] getFinalWeights() {
         return finalWeights;
     }
 

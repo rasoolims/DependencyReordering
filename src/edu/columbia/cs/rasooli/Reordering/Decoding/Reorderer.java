@@ -1,9 +1,11 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
+import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
+import edu.columbia.cs.rasooli.Reordering.Structures.FeaturedInstance;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,6 +13,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -21,16 +27,20 @@ import java.util.*;
  */
 
 public class Reorderer {
-    Classifier classifier;
+    AveragedPerceptron classifier;
     HashMap<String,Integer> posOrderFrequencyDic;
     int topK;
     HashMap<String,String> universalMap;
+    ExecutorService executor  ;
+    CompletionService<FeaturedInstance> pool ;
 
-    public Reorderer(Classifier classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK) {
+    public Reorderer(AveragedPerceptron classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK, int numOfThreads) {
         this.classifier = classifier;
         this.posOrderFrequencyDic = posOrderFrequencyDic;
         this.universalMap=universalMap;
         this.topK=topK;
+       executor = Executors.newFixedThreadPool(numOfThreads);
+        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
     }
 
     public DependencyTree reorder(DependencyTree tree) throws Exception {
@@ -55,17 +65,27 @@ public class Reorderer {
 
             ContextInstance origContext = new ContextInstance(head, origOrder, tree);
 
-            float bestScore = Float.NEGATIVE_INFINITY;
+            double bestScore = Double.NEGATIVE_INFINITY;
             ContextInstance bestCandidate = null;
 
-            for (ContextInstance candidate : origContext.getPossibleContexts(posOrderFrequencyDic,topK)) {
-                ArrayList<String> features = candidate.extractMainFeatures();
-                float score = classifier.score(features, true);
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestCandidate = candidate;
+
+            HashSet<ContextInstance> candidates= origContext.getPossibleContexts(posOrderFrequencyDic, topK);
+            
+            int s=0;
+            for (ContextInstance candidate : candidates) {
+                pool.submit(new ScoringThread(candidate,classifier,false));
+                s++;
+            }
+
+            for(int x=0;x<s;x++){
+                FeaturedInstance featuredInstance=pool.take().get();
+                if(featuredInstance.getScore()>bestScore){
+                    bestScore = featuredInstance.getScore();
+                    bestCandidate = featuredInstance.getInstance();
                 }
             }
+            
+
             reorderingInstances.add(bestCandidate);
         }
         

@@ -18,6 +18,7 @@ public class Options {
     public String universalPOSPath ;
     public String inputFile;
     public String outputFile;
+    public int numOfThreads;
 
     public int maxIter;
     public String modelPath;
@@ -30,10 +31,11 @@ public class Options {
         topK=20;
         devTreePath="";
         devIntersectionPath="";
+        numOfThreads=8;
     }
     
     public Options(String[] args){
-        super();
+        this();
         
         for(int i=0;i<args.length;i++){
             if(args[i].equals("train"))
@@ -55,6 +57,8 @@ public class Options {
                 modelPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-iter"))
                 maxIter = Integer.parseInt(args[i + 1]);
+            else if(args[i].equals("-nt"))
+                numOfThreads = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-top"))
                 topK = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-i"))
@@ -70,10 +74,10 @@ public class Options {
         builder.append("to train a model\n");
         builder.append("java -jar reorderer.jar train -tt [train-tree-file] -ti [train-intersection-file] ");
         builder.append(" -dt [dev-tree-file(optional)] -di [dev-intersection-file(optional)] -m [model-file] -p [universal-pos-file] ");
-        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)]\n");
+        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)]\n");
        
         builder.append("\nto reorder input trees\n");
-        builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]\n");
+        builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)]\n");
         
         builder.append("\nargument order is not important!\n");
         
@@ -106,6 +110,8 @@ public class Options {
             builder.append("input-file: "+inputFile+"\n");
             builder.append("output-file: "+outputFile+"\n");
         }
+        builder.append("threads: "+numOfThreads+"\n");
+
         return builder.toString();
     }
 }

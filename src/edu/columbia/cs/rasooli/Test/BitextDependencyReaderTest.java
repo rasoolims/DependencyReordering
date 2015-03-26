@@ -27,7 +27,7 @@ class BitextDependencyReaderTest {
             p6=new File(args[5]).getAbsolutePath();
         }
 
-        Trainer.trainWithPerceptron(p1,p2,p4,p5,p3,new AveragedPerceptron(),10,p6,20,4);
+        Trainer.trainWithPerceptron(p1,p2,p4,p5,p3,new AveragedPerceptron(200),10,p6,20,4);
         System.err.println("test successful" );
     }
 

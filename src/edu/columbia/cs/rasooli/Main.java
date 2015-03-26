@@ -18,6 +18,8 @@ public class Main {
         String p4 = filePath + "/sample_data/parse.mst.en";
         String p5 = filePath + "/sample_data/intersection.txt";
         String p6 = "/tmp/reorder.model";
+        
+        int size=324;
 
         if (args.length > 2) {
             Options options = new Options(args);
@@ -25,14 +27,14 @@ public class Main {
                 System.out.println(options);
                 if (options.train)
                     Trainer.trainWithPerceptron(options.trainTreePath, options.trainIntersectionPath,
-                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, new AveragedPerceptron(),
-                            options.maxIter, options.modelPath, options.topK,8);
+                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, new AveragedPerceptron(size),
+                            options.maxIter, options.modelPath, options.topK,options.numOfThreads);
                 else {
                     Info info=new Info(options.modelPath);
-                    AveragedPerceptron classifier=new AveragedPerceptron();
+                    AveragedPerceptron classifier=new AveragedPerceptron(size);
                     classifier.setAvgWeights(info.getFinalWeights());
                     Reorderer reorderer=new Reorderer(
-                         classifier,info.getPosOrderFrequencyDic(),info.getUniversalPosMap(),info.getTopK()
+                         classifier,info.getPosOrderFrequencyDic(),info.getUniversalPosMap(),info.getTopK(),options.numOfThreads
                     );
                     reorderer.decode(options.inputFile,options.outputFile);
                 }
@@ -40,7 +42,7 @@ public class Main {
                 System.out.println(Options.showHelp());
         } else {
             System.out.println(Options.showHelp());
-            Trainer.trainWithPerceptron(p1, p2, p4, p5, p3, new AveragedPerceptron(), 10, p6, 20,4);
+            Trainer.trainWithPerceptron(p1, p2, p4, p5, p3, new AveragedPerceptron(size), 10, p6, 20,4);
         }
 
     }
