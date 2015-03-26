@@ -2,9 +2,11 @@ package edu.columbia.cs.rasooli.Reordering.IO;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
+import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
 import edu.columbia.cs.rasooli.Reordering.Structures.Word;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.SortedSet;
@@ -19,6 +21,60 @@ import java.util.TreeSet;
  */
 
 public class DependencyReader {
+    public static IndexMaps readIndexMap(String path,HashMap<String, String> universalMap) throws IOException {
+        BufferedReader depReader =new BufferedReader(new FileReader(path));
+        
+        HashMap<String, Integer> strMap = new HashMap<String, Integer>();
+        int index = 0;
+
+        for (String univ : universalMap.keySet()) {
+            if (!strMap.containsKey(univ)) {
+                strMap.put(univ, index++);
+            }
+            if (!strMap.containsKey(universalMap.get(univ))) {
+                strMap.put(universalMap.get(univ), index++);
+            }
+        }
+
+        String line1;
+        while ((line1 = depReader.readLine()) != null) {
+            if (line1.trim().length() == 0)
+                continue;
+            String[] w = line1.trim().split("\t");
+            String[] t = depReader.readLine().trim().split("\t");
+            String[] l = depReader.readLine().trim().split("\t");
+            String[] h = depReader.readLine().trim().split("\t");
+
+            assert w.length == t.length && t.length == l.length && h.length == l.length;
+
+            String[] words = new String[w.length + 1];
+            words[0] = "ROOT";
+            for (int i = 0; i < w.length; i++)
+                words[i + 1] = w[i];
+
+            for (int i = 0; i < words.length; i++) {
+                if (!strMap.containsKey(words[i])) {
+                    strMap.put(words[i], index++);
+                }
+            }
+
+
+            String[] labels = new String[l.length + 1];
+            labels[0] = "";
+            for (int i = 0; i < l.length; i++)
+                labels[i + 1] = l[i];
+
+            for (int i = 0; i < labels.length; i++) {
+                if (!strMap.containsKey(labels[i])) {
+                    strMap.put(labels[i], index++);
+                }
+            }
+
+        }
+        return new IndexMaps(strMap);
+    }
+
+
     public static DependencyTree readNextBitextDependency(BufferedReader depReader,HashMap<String, String> universalMap) throws IOException {
         DependencyTree tree=null;
         String line1;

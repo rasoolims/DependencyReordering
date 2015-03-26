@@ -3,10 +3,8 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Decoding.ScoringThread;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
-import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
-import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.FeaturedInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.Info;
+import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
+import edu.columbia.cs.rasooli.Reordering.Structures.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -30,8 +28,8 @@ public class Trainer {
     public static void trainWithPerceptron(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath ,AveragedPerceptron classifier , int maxIter, String modelPath, int topK, int numOfThreads) throws Exception {
         System.err.println("Training started...");
         HashMap<String,String> universalMap= BitextDependencyReader.createUniversalMap(universalPOSPath);
+        IndexMaps maps= DependencyReader.readIndexMap(trainTreePath,universalMap);
         HashMap<String,Integer> posOrderFrequencyDic=BitextDependencyReader.constructPosOrderFrequency(trainTreePath,trainIntersectionPath,universalMap) ;
-
 
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
         CompletionService<FeaturedInstance> pool = new ExecutorCompletionService<FeaturedInstance>(executor);
