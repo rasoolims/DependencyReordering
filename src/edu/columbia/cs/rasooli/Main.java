@@ -25,11 +25,14 @@ public class Main {
             Options options = new Options(args);
             if (options.hasSufficientArguments()) {
                 System.out.println(options);
-                if (options.train)
-                    Trainer.trainWithPerceptron(options.trainTreePath, options.trainIntersectionPath,
-                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, new AveragedPerceptron(size),
-                            options.maxIter, options.modelPath, options.topK,options.numOfThreads);
+                if (options.train) {
+                    Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath,options.trainTreePath+".train",options.devTreePath+".dev",7,options.topK,324);
+                    trainer.trainWithPerceptron(options.maxIter,options.modelPath,options.numOfThreads);
+                }
                 else {
+                    //todo
+                    /*
                     Info info=new Info(options.modelPath);
                     AveragedPerceptron classifier=new AveragedPerceptron(size);
                     classifier.setAvgWeights(info.getFinalWeights());
@@ -37,12 +40,15 @@ public class Main {
                          classifier,info.getPosOrderFrequencyDic(),info.getUniversalPosMap(),info.getTopK(),options.numOfThreads ,info.getMaps()
                     );
                     reorderer.decode(options.inputFile,options.outputFile);
+                    */
                 }
             } else
                 System.out.println(Options.showHelp());
         } else {
             System.out.println(Options.showHelp());
-            Trainer.trainWithPerceptron(p1, p2, p4, p5, p3, new AveragedPerceptron(size), 10, p6, 20,4);
+            Trainer trainer=new Trainer(p1, p2, p4, p5, p3,p1+".train",p4+".dev",7,20,324);
+            trainer.trainWithPerceptron(10,p6,1);
+
         }
 
     }

@@ -77,7 +77,7 @@ public class Reorderer {
             
             int s=0;
             for (ContextInstance candidate : candidates) {
-                pool.submit(new ScoringThread(candidate,classifier,false));
+              //  pool.submit(new ScoringThread(candidate,classifier,false));
                 s++;
             }
 

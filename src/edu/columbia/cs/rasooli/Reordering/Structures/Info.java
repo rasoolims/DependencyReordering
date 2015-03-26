@@ -16,26 +16,32 @@ import java.util.zip.GZIPOutputStream;
  */
 
 public class Info {
-    HashMap<Object, Double>[] finalWeights;
+    HashMap<Object, Double>[][][] finalWeights;
     HashMap<String,String> universalPosMap;
     int topK;
-    HashMap<String,Integer> posOrderFrequencyDic;
+    HashMap<String,int[]>[]  mostCommonPermutations;
     IndexMaps maps;
     
-    public Info(AveragedPerceptron perceptron,HashMap<String,Integer> posOrderFrequencyDic, HashMap<String,String> universalPosMap, int topK,IndexMaps maps){
+    public Info(AveragedPerceptron[] perceptron, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalPosMap, int topK,IndexMaps maps){
         this.universalPosMap=universalPosMap;
         this.topK=topK;
-        this.posOrderFrequencyDic=posOrderFrequencyDic;
+        this.mostCommonPermutations=mostCommonPermutations;
         this.maps=maps;
 
-        finalWeights = new HashMap[perceptron.getWeights().length];
+        finalWeights = new HashMap[perceptron.length][][];
+        
+        for(int f=0;f<finalWeights.length;f++) {
+           finalWeights[f]= new HashMap[perceptron[f].getWeights().length][perceptron[f].getWeights()[0].length];
 
-        for(int i=0;i<finalWeights.length;i++) {
-            finalWeights[i]=new HashMap<Object, Double>();
-            for (Object feat : perceptron.getWeights()[i].keySet()) {
-                double newValue = perceptron.getWeights()[i].get(feat) - (perceptron.getAvgWeights()[i].get(feat) / perceptron.getIteration());
-                if (newValue != 0.0)
-                    finalWeights[i].put(feat, newValue);
+            for (int i = 0; i < perceptron[f].getWeights().length; i++) {
+                for (int j = 0; j < perceptron[f].getWeights()[i].length; j++) {
+                    finalWeights[f][i][j] = new HashMap<Object, Double>();
+                    for (Object feat : perceptron[f].getWeights()[i][j].keySet()) {
+                        double newValue = perceptron[f].getWeights()[i][j].get(feat) - (perceptron[f].getAvgWeights()[i][j].get(feat) / perceptron[f].getIteration());
+                        if (newValue != 0.0)
+                            finalWeights[f][i][j].put(feat, newValue);
+                    }
+                }
             }
         }
     }
@@ -46,8 +52,8 @@ public class Info {
         GZIPInputStream gz = new GZIPInputStream(fos);
 
         ObjectInputStream reader = new ObjectInputStream(gz);
-        finalWeights = (HashMap<Object, Double>[]) reader.readObject();
-        posOrderFrequencyDic = (HashMap<String, Integer>) reader.readObject();
+        finalWeights = (HashMap<Object, Double>[][][]) reader.readObject();
+        mostCommonPermutations = (HashMap<String,int[]>[]) reader.readObject();
         topK = (Integer) reader.readObject();
         universalPosMap = ( HashMap<String,String>) reader.readObject();
         maps = (IndexMaps) reader.readObject();
@@ -59,7 +65,7 @@ public class Info {
 
         ObjectOutput writer = new ObjectOutputStream(gz);
         writer.writeObject(finalWeights);
-        writer.writeObject(posOrderFrequencyDic);
+        writer.writeObject(mostCommonPermutations);
         writer.writeObject(topK);
         writer.writeObject(universalPosMap);
         writer.writeObject(maps);
@@ -68,7 +74,7 @@ public class Info {
         System.err.print("done\n");
     }
 
-    public HashMap<Object, Double>[] getFinalWeights() {
+    public HashMap<Object, Double>[][][] getFinalWeights() {
         return finalWeights;
     }
 
@@ -80,11 +86,11 @@ public class Info {
         return topK;
     }
 
-    public HashMap<String, Integer> getPosOrderFrequencyDic() {
-        return posOrderFrequencyDic;
-    }
-
     public IndexMaps getMaps() {
         return maps;
+    }
+
+    public HashMap<String, int[]>[] getMostCommonPermutations() {
+        return mostCommonPermutations;
     }
 }

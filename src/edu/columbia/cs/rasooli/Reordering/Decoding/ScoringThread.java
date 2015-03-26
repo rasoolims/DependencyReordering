@@ -18,17 +18,19 @@ public class ScoringThread implements Callable<FeaturedInstance> {
     ContextInstance candidate;
     AveragedPerceptron classifier;
     boolean isDecode;
+    int labelIndex;
 
-    public ScoringThread(ContextInstance candidate,AveragedPerceptron classifier , boolean isDecode) {
+    public ScoringThread(int labelIndex,ContextInstance candidate,AveragedPerceptron classifier , boolean isDecode) {
         this.candidate = candidate;
         this.classifier=classifier;
         this.isDecode=isDecode;
+        this.labelIndex=labelIndex;
     }
 
     @Override
     public FeaturedInstance call() throws Exception {
         ArrayList<Object>[] features = candidate.extractMainFeatures();
-        float score = classifier.score(features, isDecode);
+        float score = classifier.score(labelIndex,features, isDecode);
         return new FeaturedInstance(candidate,features,score);
     }
 }
