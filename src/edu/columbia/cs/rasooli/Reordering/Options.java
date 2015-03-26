@@ -18,7 +18,7 @@ public class Options {
     public String universalPOSPath ;
     public String inputFile;
     public String outputFile;
-    
+
     public int maxIter;
     public String modelPath;
     public int topK ;
@@ -42,6 +42,7 @@ public class Options {
                 train=false;
             else if(args[i].equals("-tt"))
                 trainTreePath=new File(args[i+1]).getAbsolutePath();
+
             else if(args[i].equals("-ti"))
                 trainIntersectionPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-dt"))
@@ -53,9 +54,9 @@ public class Options {
             else if(args[i].equals("-m"))
                 modelPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-iter"))
-                maxIter=Integer.parseInt(args[i+1]);
+                maxIter = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-top"))
-                topK=Integer.parseInt(args[i+1]);
+                topK = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-i"))
                 inputFile=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-o"))

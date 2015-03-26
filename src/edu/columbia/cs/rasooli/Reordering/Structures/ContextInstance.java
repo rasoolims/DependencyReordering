@@ -22,6 +22,10 @@ public class ContextInstance implements Comparable {
         this.tree = originalTree.getFullOrder(order, headIndex);
     }
 
+    public static int[] getPossibilities() {
+        return possibilities;
+    }
+
     private ArrayList<int[]> getAllPossibleContexts() {
         int possib = order.length > 7 ? 1 : possibilities[order.length - 1];
         if (possib == 1) {
@@ -68,7 +72,7 @@ public class ContextInstance implements Comparable {
         return order;
     }
 
-    public ArrayList<ContextInstance> getPossibleContexts(HashMap<String,Integer> posOrderMap, int max) throws Exception {
+    public HashSet<ContextInstance> getPossibleContexts(HashMap<String, Integer> posOrderMap, int max) throws Exception {
         ArrayList<int[]> permutations = getAllPossibleContexts();
 
         TreeSet<PosOrderFrequency> mostFrequentOrderings=new TreeSet<PosOrderFrequency>();
@@ -76,16 +80,16 @@ public class ContextInstance implements Comparable {
             String posOrderStr=tree.toPosString(order,headIndex);
             int freq=posOrderMap.containsKey(posOrderStr)?posOrderMap.get(posOrderStr):0;
             mostFrequentOrderings.add(new PosOrderFrequency(order,freq));
-            
+
             if(mostFrequentOrderings.size()>max)
                 mostFrequentOrderings.pollFirst();
         }
-        
-        ArrayList<ContextInstance> candidates = new ArrayList<ContextInstance>();
+
+        HashSet<ContextInstance> candidates = new HashSet<ContextInstance>();
         for (PosOrderFrequency order : mostFrequentOrderings) {
             candidates.add(new ContextInstance(headIndex, order.order, tree));
         }
-        if(candidates.size()>=max)
+        if (candidates.size() >= max && !permutations.contains(this))
             candidates.add(this);
         return candidates;
 
@@ -224,10 +228,6 @@ public class ContextInstance implements Comparable {
         return features;
     }
 
-    public static int[] getPossibilities() {
-        return possibilities;
-    }
-
     public DependencyTree getTree() {
         return tree;
     }
@@ -261,7 +261,10 @@ public class ContextInstance implements Comparable {
 
     @Override
     public int hashCode() {
-        return order.hashCode() + headIndex;
+        int hashCode = 0;
+        for (int i = 0; i < order.length; i++)
+            hashCode = hashCode | (order[i] << i);
+        return hashCode + headIndex;
     }
     //endregion
 }

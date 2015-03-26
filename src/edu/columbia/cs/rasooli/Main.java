@@ -26,7 +26,7 @@ public class Main {
                 if (options.train)
                     Trainer.trainWithPerceptron(options.trainTreePath, options.trainIntersectionPath,
                             options.devTreePath, options.devIntersectionPath, options.universalPOSPath, new AveragedPerceptron(),
-                            options.maxIter, options.modelPath, options.topK);
+                            options.maxIter, options.modelPath, options.topK,8);
                 else {
                     Info info=new Info(options.modelPath);
                     AveragedPerceptron classifier=new AveragedPerceptron();
@@ -40,7 +40,7 @@ public class Main {
                 System.out.println(Options.showHelp());
         } else {
             System.out.println(Options.showHelp());
-            Trainer.trainWithPerceptron(p1, p2, p4, p5, p3, new AveragedPerceptron(), 10, p6, 20);
+            Trainer.trainWithPerceptron(p1, p2, p4, p5, p3, new AveragedPerceptron(), 10, p6, 20,4);
         }
 
     }

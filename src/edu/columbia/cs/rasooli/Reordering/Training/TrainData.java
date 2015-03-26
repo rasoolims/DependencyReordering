@@ -2,7 +2,6 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.Pair;
 
 import java.util.*;
 
@@ -18,7 +17,7 @@ public class TrainData {
     ContextInstance goldInstance;
     ContextInstance originalInstance;
     ArrayList<String> goldFeatures;
-    ArrayList<ContextInstance> candidates;
+    HashSet<ContextInstance> candidates;
 
     public TrainData(ContextInstance originalInstance, ContextInstance goldInstance, HashMap<String,Integer> posOrderFrequencyDic, int topK) throws Exception {
         this.originalInstance = originalInstance;

@@ -16,7 +16,7 @@ public abstract class Classifier {
         iteration = 1;
     }
 
-    public abstract void updateWeight(String feature, float change);
+    public abstract void updateWeight(String feature, double change);
 
     public abstract float score(ArrayList<String> features, boolean decode);
 
