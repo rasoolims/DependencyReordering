@@ -1,5 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
+import edu.columbia.cs.rasooli.Reordering.Enums.Position;
+
 import java.util.*;
 
 /**
@@ -109,12 +111,11 @@ public class ContextInstance implements Comparable {
 
         //region head feature
         Word headWord = words[headIndex];
-        features[index++].add(headWord.wordForm);
-        features[index++].add(headWord.cPos);
-        features[index++].add(headWord.fPos);
+        features[index++].add(headWord.wordFormIndex);
+        features[index++].add(headWord.cPosIndex);
+        features[index++].add(headWord.fPosIndex);
         //endregion
 
-        
         int currIndex=index;
         for (int i = 0; i < order.length; i++) {
             if (order[i] == headIndex)
@@ -123,25 +124,25 @@ public class ContextInstance implements Comparable {
             index=currIndex;
             
             //region children
-            String position = "before";
+            Position position = Position.before;
             if (indices[order[i]] == indices[headIndex] - 1)
-                position = "imm-before";
+                position =  Position.immediatelyBefore;
             else if (indices[order[i]] == indices[headIndex] + 1)
-                position = "imm-after";
+                position =  Position.immediatelyAfter;
             else if (indices[order[i]] > indices[headIndex])
-                position = "after";
+                position =  Position.after;
 
             Word child = words[order[i]];
 
-            features[index].add(position + ":" + child.wordForm);
-            features[index+1].add(position + ":" + child.cPos);
-            features[index+2].add(position + ":" + child.fPos);
+            features[index].add(position.value | (child.wordFormIndex<<2));
+            features[index+1].add(position.value | (child.cPosIndex<<2));
+            features[index+2].add(position.value | (child.fPosIndex<<2));
             //endregion
 
             //region there is a gap with head
-            if (!position.startsWith("imm")) {
+            if (!position.equals(Position.immediatelyAfter) && !position.equals(Position.immediatelyBefore)) {
                 int first, last;
-                if (position.equals("before")) {
+                if (position.equals(Position.before)) {
                     last = treeOrder[indices[headIndex] - 1];
                     first = treeOrder[indices[order[i]] + 1];
                 } else {
@@ -152,13 +153,13 @@ public class ContextInstance implements Comparable {
                 Word firstWord = words[first];
                 Word lastWord = words[last];
 
-                features[index+3].add(firstWord.wordForm);
-                features[index+4].add(firstWord.cPos);
-                features[index+5].add(firstWord.fPos);
+                features[index+3].add(firstWord.wordFormIndex);
+                features[index+4].add(firstWord.cPosIndex);
+                features[index+5].add(firstWord.fPosIndex);
 
-                features[index+6].add(lastWord.wordForm);
-                features[index+7].add(lastWord.cPos);
-                features[index+8].add(lastWord.fPos);
+                features[index+6].add(lastWord.wordFormIndex);
+                features[index+7].add(lastWord.cPosIndex);
+                features[index+8].add(lastWord.fPosIndex);
             }
             index+=9;
             //endregion
@@ -171,13 +172,13 @@ public class ContextInstance implements Comparable {
                 Word firstWord = words[first];
                 Word lastWord = words[last];
 
-                features[index].add(firstWord.wordForm);
-                features[index+1].add(firstWord.cPos);
-                features[index+2].add(firstWord.fPos);
+                features[index].add(firstWord.wordFormIndex);
+                features[index+1].add(firstWord.cPosIndex);
+                features[index+2].add(firstWord.fPosIndex);
 
-                features[index+3].add(lastWord.wordForm);
-                features[index+4].add(lastWord.cPos);
-                features[index+5].add(lastWord.fPos);
+                features[index+3].add(lastWord.wordFormIndex);
+                features[index+4].add(lastWord.cPosIndex);
+                features[index+5].add(lastWord.fPosIndex);
             }
             index+=6;
             //endregion
@@ -204,24 +205,24 @@ public class ContextInstance implements Comparable {
 
         if (headOrder > 0) {
             Word leftSibling = words[orderedSiblings[headOrder - 1]];
-            features[index].add( leftSibling.wordForm);
-            features[index+1].add(leftSibling.cPos);
-            features[index+2].add( leftSibling.fPos);
+            features[index].add( leftSibling.wordFormIndex);
+            features[index+1].add(leftSibling.cPosIndex);
+            features[index+2].add( leftSibling.fPosIndex);
         } else {
-            features[index].add("left_sibling:word:NONE");
-            features[index+1].add("left_sibling:cpos:NONE");
-            features[index+2].add("left_sibling:fpos:NONE");
+            features[index].add(-2);
+            features[index+1].add(-2);
+            features[index+2].add(-2);
         }
 
         if (headOrder < orderedSiblings.length - 1) {
             Word rightSibling = words[orderedSiblings[headOrder + 1]];
-            features[index+3].add( rightSibling.wordForm);
-            features[index+4].add(rightSibling.cPos);
-            features[index+5].add( rightSibling.fPos);
+            features[index+3].add( rightSibling.wordFormIndex);
+            features[index+4].add(rightSibling.cPosIndex);
+            features[index+5].add( rightSibling.fPosIndex);
         } else {
-            features[index+3].add("right_sibling:word:NONE");
-            features[index+4].add("right_sibling:cpos:NONE");
-            features[index+5].add("right_sibling:fpos:NONE");
+            features[index+3].add(-2);
+            features[index+4].add(-2);
+            features[index+5].add(-2);
         }
         index+=6;
         //endregion
@@ -235,8 +236,16 @@ public class ContextInstance implements Comparable {
                 int featLen2 = features[f2].size();
                 for (i = 0; i < featLen; i++) {
                     for (int j = 0; j < featLen2; j++) {
-                        if(!(i==j && f1==f2))
-                            features[index].add(features[f1].get(i) + "|" + features[f2].get(j));
+                        if(!(i==j && f1==f2)) {
+                            try {
+                                long ft1 = (Integer) features[f1].get(i);
+                                long ft2 = ((Integer) features[f2].get(j));
+                                long feat = ft1 | ft2 << 32;
+                                features[index].add(feat);
+                            }catch (Exception ex){
+                                System.out.print("");
+                            }
+                        }
                     }
                 }
                 index++;

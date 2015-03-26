@@ -129,6 +129,7 @@ public class DependencyTree {
                                 newOrder[currentIndex] = order[d];
                                 newIndices[order[d]] = currentIndex;
                             }catch (Exception ex){
+
                                 throw new Exception(ex);
                             }
                             currentIndex++;

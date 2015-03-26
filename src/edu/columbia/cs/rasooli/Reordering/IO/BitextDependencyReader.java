@@ -2,6 +2,7 @@ package edu.columbia.cs.rasooli.Reordering.IO;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.BitextDependency;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
+import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
 import edu.columbia.cs.rasooli.Reordering.Structures.Word;
 
 import java.io.BufferedReader;
@@ -35,7 +36,7 @@ public class BitextDependencyReader {
      * @param parsedFilePath        should have mst format
      * @param alignIntersectionPath should be a alignment intersection
      */
-    public static ArrayList<BitextDependency> readFromBitext(String parsedFilePath, String alignIntersectionPath, String universalPosPath) throws Exception {
+    public static ArrayList<BitextDependency> readFromBitext(String parsedFilePath, String alignIntersectionPath, String universalPosPath, IndexMaps maps) throws Exception {
         HashMap<String, String> universalMap = createUniversalMap(universalPosPath);
 
         ArrayList<BitextDependency> data = new ArrayList<BitextDependency>();
@@ -78,7 +79,7 @@ public class BitextDependencyReader {
 
             Word[] wordStructs = new Word[words.length];
             for (int i = 0; i < words.length; i++) {
-                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]));
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]),maps);
             }
 
 
@@ -109,7 +110,7 @@ public class BitextDependencyReader {
     }
     
     
-    public static BitextDependency readNextBitextDependency(BufferedReader depReader,BufferedReader intersectionReader,HashMap<String, String> universalMap) throws IOException {
+    public static BitextDependency readNextBitextDependency(BufferedReader depReader,BufferedReader intersectionReader,HashMap<String, String> universalMap, IndexMaps maps) throws IOException {
        BitextDependency bitextDependency=null;
         String line1;
         while ((line1 = depReader.readLine()) != null) {
@@ -144,7 +145,7 @@ public class BitextDependencyReader {
 
             Word[] wordStructs = new Word[words.length];
             for (int i = 0; i < words.length; i++) {
-                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]));
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]),maps);
             }
 
 
@@ -171,7 +172,7 @@ public class BitextDependencyReader {
        return bitextDependency;
     }
 
-    public static   HashMap<String,Integer> constructPosOrderFrequency(String parsedFilePath, String alignIntersectionPath,  HashMap<String, String> universalMap) throws  Exception{
+    public static   HashMap<String,Integer> constructPosOrderFrequency(String parsedFilePath, String alignIntersectionPath,  HashMap<String, String> universalMap,IndexMaps maps) throws  Exception{
         HashMap<String, Integer> posOrderMap = new HashMap<String, Integer>();
         System.err.print("Constructing frequency maps...");
 
@@ -212,7 +213,7 @@ public class BitextDependencyReader {
 
             Word[] wordStructs = new Word[words.length];
             for (int i = 0; i < words.length; i++) {
-                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]));
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]),maps);
             }
 
 

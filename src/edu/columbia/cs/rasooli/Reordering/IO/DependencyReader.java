@@ -75,7 +75,7 @@ public class DependencyReader {
     }
 
 
-    public static DependencyTree readNextBitextDependency(BufferedReader depReader,HashMap<String, String> universalMap) throws IOException {
+    public static DependencyTree readNextDependencyTree(BufferedReader depReader, HashMap<String, String> universalMap, IndexMaps maps) throws IOException {
         DependencyTree tree=null;
         String line1;
         while ((line1 = depReader.readLine()) != null) {
@@ -110,11 +110,12 @@ public class DependencyReader {
 
             Word[] wordStructs = new Word[words.length];
             for (int i = 0; i < words.length; i++) {
-                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]));
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]),maps);
             }
 
 
             tree = new DependencyTree(wordStructs, heads, labels);
+            return tree;
         }
         return tree;
     }

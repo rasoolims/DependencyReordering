@@ -14,12 +14,31 @@ public class Word {
     String wordForm;
     String fPos;
     String cPos;
+    
+    int wordFormIndex;
+    int fPosIndex;
+    int cPosIndex;
 
-    public Word(int realIndex, String wordForm, String fPos, String cPos) {
+    public Word(int realIndex, String wordForm, String fPos, String cPos, IndexMaps maps) {
         this.realIndex = realIndex;
         this.wordForm = wordForm;
+        if(maps.strMap.containsKey(wordForm))
+            wordFormIndex = maps.strMap.get(wordForm);
+        else
+        wordFormIndex =-1;
+        
         this.fPos = fPos;
+        if(maps.strMap.containsKey(fPos))
+            fPosIndex= maps.strMap.get(fPos);
+        else
+            fPosIndex=-1;
+        
         this.cPos = cPos;
+        this.fPos = fPos;
+        if(maps.strMap.containsKey(cPos))
+            cPosIndex= maps.strMap.get(cPos);
+        else
+            cPosIndex=-1;
     }
 
     public int getRealIndex() {
@@ -36,5 +55,17 @@ public class Word {
 
     public String getcPos() {
         return cPos;
+    }
+
+    public int getWordFormIndex() {
+        return wordFormIndex;
+    }
+
+    public int getfPosIndex() {
+        return fPosIndex;
+    }
+
+    public int getcPosIndex() {
+        return cPosIndex;
     }
 }

@@ -1,17 +1,16 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
-import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
 import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
 import edu.columbia.cs.rasooli.Reordering.Structures.FeaturedInstance;
+import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -33,17 +32,22 @@ public class Reorderer {
     HashMap<String,String> universalMap;
     ExecutorService executor  ;
     CompletionService<FeaturedInstance> pool ;
-
-    public Reorderer(AveragedPerceptron classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK, int numOfThreads) {
+    IndexMaps maps;
+    int numOfThreads;
+    
+    
+    public Reorderer(AveragedPerceptron classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
         this.classifier = classifier;
         this.posOrderFrequencyDic = posOrderFrequencyDic;
         this.universalMap=universalMap;
         this.topK=topK;
-       executor = Executors.newFixedThreadPool(numOfThreads);
-        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+        this.numOfThreads=numOfThreads; 
+        this.maps=maps;
     }
 
     public DependencyTree reorder(DependencyTree tree) throws Exception {
+        
+        
         HashSet<Integer> heads=new HashSet<Integer>();
         for(int h=1;h<tree.size();h++)
             if(tree.hasDep(h))
@@ -97,20 +101,30 @@ public class Reorderer {
         return currentTree;
     }
     
+    
     public void decode(String inputFile,String outputFile) throws  Exception {
+        executor = Executors.newFixedThreadPool(numOfThreads);
+        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+        
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 
+         long start=System.currentTimeMillis();
+
         DependencyTree tree;
         int count=0;
-        while ((tree = DependencyReader.readNextBitextDependency(reader, universalMap)) != null) {
+        while ((tree = DependencyReader.readNextDependencyTree(reader, universalMap, maps)) != null) {
             writer.write(reorder(tree).toConllOutput());
             count++;
             if(count%100==0)
                 System.out.print(count + "...");
         }
         System.out.print(count+"\n");
+        long end=System.currentTimeMillis();
+        float elapsed=(float)(end-start)/count;
+        System.err.println("time for decoding "+elapsed + " ms per sentence");
         writer.flush();
         writer.close();
+        executor.shutdown();
     }
 }

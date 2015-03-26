@@ -34,7 +34,7 @@ public class Main {
                     AveragedPerceptron classifier=new AveragedPerceptron(size);
                     classifier.setAvgWeights(info.getFinalWeights());
                     Reorderer reorderer=new Reorderer(
-                         classifier,info.getPosOrderFrequencyDic(),info.getUniversalPosMap(),info.getTopK(),options.numOfThreads
+                         classifier,info.getPosOrderFrequencyDic(),info.getUniversalPosMap(),info.getTopK(),options.numOfThreads ,info.getMaps()
                     );
                     reorderer.decode(options.inputFile,options.outputFile);
                 }

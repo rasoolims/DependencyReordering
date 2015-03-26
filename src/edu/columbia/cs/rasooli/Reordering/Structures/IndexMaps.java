@@ -1,5 +1,6 @@
 package edu.columbia.cs.rasooli.Reordering.Structures;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -10,7 +11,7 @@ import java.util.HashMap;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 
-public class IndexMaps {
+public class IndexMaps implements Serializable {
     public HashMap<String,Integer> strMap;
     public String[] reversedMap;
 

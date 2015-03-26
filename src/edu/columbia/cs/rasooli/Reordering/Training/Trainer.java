@@ -28,21 +28,22 @@ public class Trainer {
     public static void trainWithPerceptron(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath ,AveragedPerceptron classifier , int maxIter, String modelPath, int topK, int numOfThreads) throws Exception {
         System.err.println("Training started...");
         HashMap<String,String> universalMap= BitextDependencyReader.createUniversalMap(universalPOSPath);
-        IndexMaps maps= DependencyReader.readIndexMap(trainTreePath,universalMap);
-        HashMap<String,Integer> posOrderFrequencyDic=BitextDependencyReader.constructPosOrderFrequency(trainTreePath,trainIntersectionPath,universalMap) ;
+        IndexMaps maps= DependencyReader.readIndexMap(trainTreePath, universalMap);
+        HashMap<String,Integer> posOrderFrequencyDic=BitextDependencyReader.constructPosOrderFrequency(trainTreePath,trainIntersectionPath,universalMap,maps) ;
 
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
         CompletionService<FeaturedInstance> pool = new ExecutorCompletionService<FeaturedInstance>(executor);
 
         for(int i=0;i<maxIter;i++) {
-            System.err.println("Iteration: "+(i+1)+"...");
+            long start=System.currentTimeMillis();
+            System.err.println("\nIteration: "+(i+1)+"...");
             int count=0;
             float correct=0;
             BufferedReader treeReader=new BufferedReader(new FileReader(trainTreePath));
             BufferedReader intersectionReader=new BufferedReader(new FileReader(trainIntersectionPath));
 
             BitextDependency bitextDependency;
-            while((bitextDependency=BitextDependencyReader.readNextBitextDependency(treeReader,intersectionReader,universalMap))!=null){
+            while((bitextDependency=BitextDependencyReader.readNextBitextDependency(treeReader,intersectionReader,universalMap,maps))!=null){
                try {
                    for (TrainData trainData : bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic, topK)) {
                        double bestScore = Double.NEGATIVE_INFINITY;
@@ -102,8 +103,11 @@ public class Trainer {
             float correctPredictions =100f*correct/count;
             System.err.print("Correct prediction: "+correctPredictions+"\n");
 
-            Info info=new Info(classifier,posOrderFrequencyDic,universalMap,topK);
+            Info info=new Info(classifier,posOrderFrequencyDic,universalMap,topK,maps);
             info.saveModel(modelPath + "_iter" + (i + 1));
+            long end=System.currentTimeMillis();
+            long elapsed=(end-start)/1000;
+            System.err.println("time for training "+elapsed + " seconds");
 
             if(!devTreePath.equals("")) {
                 count = 0;
@@ -114,7 +118,7 @@ public class Trainer {
 
                 BufferedReader devTreeReader = new BufferedReader(new FileReader(devTreePath));
                 BufferedReader devIntersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
-                while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(devTreeReader, devIntersectionReader, universalMap)) != null) {
+                while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(devTreeReader, devIntersectionReader, universalMap,maps)) != null) {
                     try {
                     for (TrainData data : bitextDependency.getAllPossibleTrainData(posOrderFrequencyDic, topK)) {
                         double bestScore = Double.NEGATIVE_INFINITY;
@@ -154,5 +158,7 @@ public class Trainer {
                 System.err.print("Correct  dev prediction: " + correctPredictions + "\n");
             }
         }
+        
+        executor.shutdown();
     }
 }

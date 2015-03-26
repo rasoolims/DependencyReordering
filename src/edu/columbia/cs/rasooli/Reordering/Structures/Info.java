@@ -20,11 +20,13 @@ public class Info {
     HashMap<String,String> universalPosMap;
     int topK;
     HashMap<String,Integer> posOrderFrequencyDic;
-
-    public Info(AveragedPerceptron perceptron,HashMap<String,Integer> posOrderFrequencyDic, HashMap<String,String> universalPosMap, int topK){
+    IndexMaps maps;
+    
+    public Info(AveragedPerceptron perceptron,HashMap<String,Integer> posOrderFrequencyDic, HashMap<String,String> universalPosMap, int topK,IndexMaps maps){
         this.universalPosMap=universalPosMap;
         this.topK=topK;
         this.posOrderFrequencyDic=posOrderFrequencyDic;
+        this.maps=maps;
 
         finalWeights = new HashMap[perceptron.getWeights().length];
 
@@ -48,6 +50,7 @@ public class Info {
         posOrderFrequencyDic = (HashMap<String, Integer>) reader.readObject();
         topK = (Integer) reader.readObject();
         universalPosMap = ( HashMap<String,String>) reader.readObject();
+        maps = (IndexMaps) reader.readObject();
     }
     
     public void saveModel(String modelPath) throws  Exception{
@@ -59,6 +62,7 @@ public class Info {
         writer.writeObject(posOrderFrequencyDic);
         writer.writeObject(topK);
         writer.writeObject(universalPosMap);
+        writer.writeObject(maps);
         writer.flush();
         writer.close();
         System.err.print("done\n");
@@ -78,5 +82,9 @@ public class Info {
 
     public HashMap<String, Integer> getPosOrderFrequencyDic() {
         return posOrderFrequencyDic;
+    }
+
+    public IndexMaps getMaps() {
+        return maps;
     }
 }
