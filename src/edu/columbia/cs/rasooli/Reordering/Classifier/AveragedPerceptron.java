@@ -71,7 +71,7 @@ public class AveragedPerceptron extends Classifier implements Serializable {
         System.err.print("done\n");
     }
 
-    public float score(int label, ArrayList<Object>[] features,boolean decode){
+    public double score(int label, ArrayList<Object>[] features,boolean decode){
         float score=0.0f;
         HashMap<Object, Double>[] map;
         if(decode)

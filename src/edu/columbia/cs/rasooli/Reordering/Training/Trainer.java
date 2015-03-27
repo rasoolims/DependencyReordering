@@ -58,7 +58,7 @@ public class Trainer {
     public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {
         System.err.println("Training started...");
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
-        CompletionService<FeaturedInstance> pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+        CompletionService<Pair<Integer,Double>> pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
 
         int max = 200000;
 
@@ -85,16 +85,23 @@ public class Trainer {
                     int goldIndex = 0;
                     int l = 0;
                     for (String label : mostCommonPermutations[index].keySet()) {
-                        double score = classifier[index].score(l, features, false);
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestLIndex = l;
-                        }
-                        if (goldLabel.equals(label)) {
+                        pool.submit(new ScoringThread(l,features,classifier[index],false));
+                        
+                        if (goldLabel.equals(label))
                             goldIndex = l;
-                        }
                         l++;
                     }
+                    
+                    for(int f=0;f<l;f++){
+                        Pair<Integer,Double> pair=pool.take().get();
+                        double score = pair.second;
+                        int ind=pair.first;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestLIndex = ind;
+                        }
+                    }
+                    
 
                     if (goldIndex != bestLIndex) {
                         for (int f = 0; f < features.length; f++) {
@@ -113,13 +120,12 @@ public class Trainer {
             System.err.print(count + "\n");
             float correctPredictions = 100f * correct / count;
             System.err.print("Correct prediction: " + correctPredictions + "\n");
-
-
             Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
             info.saveModel(modelPath + "_iter" + (i + 1));
             long end = System.currentTimeMillis();
             long elapsed = (end - start) / 1000;
             System.err.println("time for training " + elapsed + " seconds");
+
 
             if (!devTreePath.equals("")) {
                 depReader = new BufferedReader(new FileReader(devTreePath));
@@ -149,17 +155,22 @@ public class Trainer {
                         int goldIndex = 0;
                         int l = 0;
                         for (String label : mostCommonPermutations[index].keySet()) {
-                            double score = decodeClassifier[index].score(l, features, true);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestLIndex = l;
-                            }
-                            if (goldLabel.equals(label)) {
+                            pool.submit(new ScoringThread(l, features, classifier[index], true));
+                            if (goldLabel.equals(label))
                                 goldIndex = l;
-                            }
                             l++;
                         }
-
+                        
+                        for(int f=0;f<l;f++){
+                            Pair<Integer,Double> pair=pool.take().get();
+                            double score = pair.second;
+                            int ind=pair.first;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestLIndex = ind;
+                            }
+                        }
+                        
                         if (goldIndex == bestLIndex) {
                             correct++;
                         }

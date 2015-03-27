@@ -29,7 +29,7 @@ public class Reorderer {
     int topK;
     HashMap<String,String> universalMap;
     ExecutorService executor  ;
-    CompletionService<FeaturedInstance> pool ;
+    CompletionService<Pair<Integer,Double>> pool ;
     IndexMaps maps;
     int numOfThreads;
     
@@ -204,7 +204,7 @@ public class Reorderer {
 
     public void decode(String inputFile,String outputFile) throws  Exception {
         executor = Executors.newFixedThreadPool(numOfThreads);
-        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+        pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
         
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
@@ -230,7 +230,7 @@ public class Reorderer {
 
     public void decodeWithAlignmentGuide(String inputFile,String intersectionFile, String outputFile) throws  Exception {
         executor = Executors.newFixedThreadPool(numOfThreads);
-        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+        pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
 
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedReader inersectionReader = new BufferedReader(new FileReader(intersectionFile));
