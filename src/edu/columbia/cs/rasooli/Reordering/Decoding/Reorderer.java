@@ -1,11 +1,9 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
+import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
-import edu.columbia.cs.rasooli.Reordering.Structures.ContextInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.DependencyTree;
-import edu.columbia.cs.rasooli.Reordering.Structures.FeaturedInstance;
-import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
+import edu.columbia.cs.rasooli.Reordering.Structures.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -102,8 +100,108 @@ public class Reorderer {
         
         return currentTree;
     }
-    
-    
+
+    public DependencyTree reorderWithAlignmentGuide(BitextDependency bitextDependency) throws Exception {
+     DependencyTree tree=bitextDependency.getSourceTree();
+        
+        HashSet<Integer> heads=new HashSet<Integer>();
+        for(int h=1;h<tree.size();h++)
+            if(tree.hasDep(h))
+                heads.add(h);
+
+        ArrayList<ContextInstance> reorderingInstances=new ArrayList<ContextInstance>();
+
+        for(int head:heads) {
+            if(bitextDependency.getTrainableHeads().contains(head)){
+                HashSet<Integer> deps = bitextDependency.getSourceTree().getDependents(head);
+                TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+                origOrderSet.add(head);
+                for (int dep : deps)
+                    origOrderSet.add(dep);
+                
+                int index = 0;
+                int[] ordering = new int[origOrderSet.size()];
+                HashMap<Integer, Integer> revOrdering = new HashMap<Integer, Integer>();
+                revOrdering.put(head, index);
+                ordering[index++] = head;
+                for (int d : deps) {
+                    revOrdering.put(d, index);
+                    ordering[index++] = d;
+                }
+                
+                TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+
+                SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
+                changedOrder.put(alignedSet[head].first(), head);
+                for (int dep : origOrderSet)
+                    changedOrder.put(alignedSet[dep].first(), dep);
+
+                int[] goldOrder = new int[1 + deps.size()];
+                int i = 0;
+                for (int dep : changedOrder.keySet()) {
+                    goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
+                }
+
+                int[] newOrder = new int[ordering.length];
+                if (goldOrder != null)
+                    for (int o = 0; o < newOrder.length; o++)
+                        newOrder[o] = ordering[goldOrder[o]];
+                else
+                    newOrder = ordering;
+                
+                ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+                reorderingInstances.add(bestCandidate);
+            }   else {
+                HashSet<Integer> deps = tree.getDependents(head);
+                TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+                origOrderSet.add(head);
+                for (int dep : deps)
+                    origOrderSet.add(dep);
+
+                int[] origOrder = new int[1 + deps.size()];
+                int i = 0;
+                for (int dep : origOrderSet)
+                    origOrder[i++] = dep;
+
+                ContextInstance origContext = new ContextInstance(head, origOrder, tree);
+                ArrayList<Object>[] features = origContext.extractMainFeatures();
+                double bestScore = Double.NEGATIVE_INFINITY;
+                int[] bestOrder = null;
+
+                int index = deps.size() - 1;
+                if (index < mostCommonPermutations.length) {
+                    int l = 0;
+                    for (String label : mostCommonPermutations[index].keySet()) {
+                        double score = classifier[index].score(l, features, true);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestOrder = mostCommonPermutations[index].get(label);
+                        }
+                        l++;
+                    }
+                }
+
+
+                int[] newOrder = new int[origOrder.length];
+                if (bestOrder != null)
+                    for (int o = 0; o < newOrder.length; o++)
+                        newOrder[o] = origOrder[bestOrder[o]];
+                else
+                    newOrder = origOrder;
+                ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+
+                reorderingInstances.add(bestCandidate);
+            }
+        }
+
+        DependencyTree currentTree=tree;
+        for(ContextInstance instance:reorderingInstances) {
+            currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
+        }
+
+        return currentTree;
+    }
+
     public void decode(String inputFile,String outputFile) throws  Exception {
         executor = Executors.newFixedThreadPool(numOfThreads);
         pool = new ExecutorCompletionService<FeaturedInstance>(executor);
@@ -121,7 +219,7 @@ public class Reorderer {
             if(count%100==0)
                 System.err.print(count + "...");
         }
-        System.out.print(count+"\n");
+        System.err.print(count+"\n");
         long end=System.currentTimeMillis();
         float elapsed=(float)(end-start)/count;
         System.err.println("time for decoding "+elapsed + " ms per sentence");
@@ -129,4 +227,33 @@ public class Reorderer {
         writer.close();
         executor.shutdown();
     }
+
+    public void decodeWithAlignmentGuide(String inputFile,String intersectionFile, String outputFile) throws  Exception {
+        executor = Executors.newFixedThreadPool(numOfThreads);
+        pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        BufferedReader inersectionReader = new BufferedReader(new FileReader(intersectionFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+
+        long start=System.currentTimeMillis();
+
+        BitextDependency bitextDependency;
+        
+        int count=0;
+        while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(reader, inersectionReader, universalMap, maps)) != null) {
+            writer.write(reorderWithAlignmentGuide(bitextDependency).toConllOutput());
+            count++;
+            if(count%100==0)
+                System.err.print(count + "...");
+        }
+        System.err.print(count+"\n");
+        long end=System.currentTimeMillis();
+        float elapsed=(float)(end-start)/count;
+        System.err.println("time for decoding "+elapsed + " ms per sentence");
+        writer.flush();
+        writer.close();
+        executor.shutdown();
+    }
+
 }

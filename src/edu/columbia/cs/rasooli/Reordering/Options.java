@@ -17,8 +17,11 @@ public class Options {
     public String devIntersectionPath;
     public String universalPOSPath ;
     public String inputFile;
+    public String inputIntersectionFile;
     public String outputFile;
     public int numOfThreads;
+    public boolean decodeWithAlignment=false;
+    public boolean decode=false;
 
     public int maxIter;
     public String modelPath;
@@ -32,6 +35,8 @@ public class Options {
         devTreePath="";
         devIntersectionPath="";
         numOfThreads=8;
+        decodeWithAlignment=false;
+        decode=false;
     }
     
     public Options(String[] args){
@@ -40,8 +45,14 @@ public class Options {
         for(int i=0;i<args.length;i++){
             if(args[i].equals("train"))
                 train=true;
-            else if (args[i].equals("decode"))
-                train=false;
+            else if (args[i].equals("decode")) {
+                train = false;
+                decode=true;
+            }  else if (args[i].equals("decode_align")) {
+                train = false;
+                decode=false;
+                decodeWithAlignment=true;
+            }
             else if(args[i].equals("-tt"))
                 trainTreePath=new File(args[i+1]).getAbsolutePath();
 
@@ -63,6 +74,8 @@ public class Options {
                 topK = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-i"))
                 inputFile=new File(args[i+1]).getAbsolutePath();
+            else if(args[i].equals("-is"))
+                inputIntersectionFile=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-o"))
                 outputFile=new File(args[i+1]).getAbsolutePath();
         }
@@ -78,6 +91,10 @@ public class Options {
        
         builder.append("\nto reorder input trees\n");
         builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)]\n");
+
+        builder.append("\nto reorder input trees with alignment guide\n");
+        builder.append("java -jar reorderer.jar  decode_align -m [model-file] -i [input-file] -is [input-alignment-intersection-file] -o [output-file]  -nt [#threads(default:8)]\n");
+
         
         builder.append("\nargument order is not important!\n");
         
@@ -86,7 +103,9 @@ public class Options {
     }
     
     public boolean hasSufficientArguments() {
-        if (!train && inputFile != null && outputFile != null && modelPath != null)
+        if (decode && inputFile != null && outputFile != null && modelPath != null)
+            return true;
+        if (decodeWithAlignment && inputFile != null && inputIntersectionFile != null && outputFile != null && modelPath != null)
             return true;
         if (train && trainIntersectionPath != null && trainTreePath != null && modelPath != null && universalPOSPath != null)
             return true;
@@ -108,6 +127,7 @@ public class Options {
         }  else{
             builder.append("model: "+modelPath+"\n");
             builder.append("input-file: "+inputFile+"\n");
+            builder.append("input-intersection-file: "+inputIntersectionFile+"\n");
             builder.append("output-file: "+outputFile+"\n");
         }
         builder.append("threads: "+numOfThreads+"\n");
