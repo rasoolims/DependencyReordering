@@ -71,14 +71,25 @@ public class AveragedPerceptron extends Classifier implements Serializable {
         System.err.print("done\n");
     }
 
+    public double devScore(int label, ArrayList<Object>[] features){
+        double score=0;
+        for(int i=0;i<features.length;i++) {
+            for (Object feature : features[i]) {
+                if (weights[label][i].containsKey(feature))
+                    score +=  (weights[label][i].get(feature) -(avgWeights[label][i].get(feature)/iteration));
+            }
+        }
+        return score;
+    }
+    
     public double score(int label, ArrayList<Object>[] features,boolean decode){
-        float score=0.0f;
+        double score=0.0;
         HashMap<Object, Double>[] map;
         if(decode)
             map= avgWeights[label];
         else
             map= weights[label];
-      
+
         for(int i=0;i<features.length;i++) {
             for (Object feature : features[i]) {
                 if (map[i].containsKey(feature))

@@ -49,8 +49,8 @@ public class Main {
                 System.out.println(Options.showHelp());
         } else {
             System.out.println(Options.showHelp());
-          // Trainer trainer=new Trainer(p1, p2, p4, p5, p3,p1+".train",p4+".dev",7,20,324);
-          //  trainer.trainWithPerceptron(3,p6,4);
+           Trainer trainer=new Trainer(p1, p2, p4, p5, p3,p1+".train",p4+".dev",7,20,324);
+            trainer.trainWithPerceptron(3,p6,4);
 
             Info info=new Info(p6+"_iter3");
             AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];

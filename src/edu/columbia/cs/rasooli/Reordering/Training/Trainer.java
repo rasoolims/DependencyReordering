@@ -1,6 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
+import edu.columbia.cs.rasooli.Reordering.Decoding.DevScoringThread;
 import edu.columbia.cs.rasooli.Reordering.Decoding.ScoringThread;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
@@ -131,14 +132,6 @@ public class Trainer {
                 depReader = new BufferedReader(new FileReader(devTreePath));
                 intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
 
-                HashMap<Object, Double>[][][] weights = info.getFinalWeights();
-                AveragedPerceptron[] decodeClassifier = new AveragedPerceptron[weights.length];
-
-                for (int l = 0; l < maxLen; l++) {
-                    decodeClassifier[l] = new AveragedPerceptron(topK, featLen);
-                    decodeClassifier[l].setAvgWeights(weights[l]);
-                }
-
                 count = 0;
                 correct = 0;
 
@@ -155,7 +148,7 @@ public class Trainer {
                         int goldIndex = 0;
                         int l = 0;
                         for (String label : mostCommonPermutations[index].keySet()) {
-                            pool.submit(new ScoringThread(l, features, classifier[index], true));
+                            pool.submit(new DevScoringThread(l, features, classifier[index]));
                             if (goldLabel.equals(label))
                                 goldIndex = l;
                             l++;

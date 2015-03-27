@@ -127,29 +127,32 @@ public class Reorderer {
                     revOrdering.put(d, index);
                     ordering[index++] = d;
                 }
-                
-                TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+                try {
+                    TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
 
-                SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
-                changedOrder.put(alignedSet[head].first(), head);
-                for (int dep : origOrderSet)
-                    changedOrder.put(alignedSet[dep].first(), dep);
+                    SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
+                    changedOrder.put(alignedSet[head].first(), head);
+                    for (int dep : origOrderSet)
+                        changedOrder.put(alignedSet[dep].first(), dep);
 
-                int[] goldOrder = new int[1 + deps.size()];
-                int i = 0;
-                for (int dep : changedOrder.keySet()) {
-                    goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
+                    int[] goldOrder = new int[1 + deps.size()];
+                    int i = 0;
+                    for (int dep : changedOrder.keySet()) {
+                        goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
+                    }
+
+                    int[] newOrder = new int[ordering.length];
+                    if (goldOrder != null)
+                        for (int o = 0; o < newOrder.length; o++)
+                            newOrder[o] = ordering[goldOrder[o]];
+                    else
+                        newOrder = ordering;
+
+                    ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+                    reorderingInstances.add(bestCandidate);
+                }catch (Exception ex){
+                    System.out.print("err!...");
                 }
-
-                int[] newOrder = new int[ordering.length];
-                if (goldOrder != null)
-                    for (int o = 0; o < newOrder.length; o++)
-                        newOrder[o] = ordering[goldOrder[o]];
-                else
-                    newOrder = ordering;
-                
-                ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
-                reorderingInstances.add(bestCandidate);
             }   else {
                 HashSet<Integer> deps = tree.getDependents(head);
                 TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
