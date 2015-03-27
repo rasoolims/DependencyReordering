@@ -28,8 +28,7 @@ public class Reorderer {
     HashMap<String,int[]>[]  mostCommonPermutations;
     int topK;
     HashMap<String,String> universalMap;
-    ExecutorService executor  ;
-    CompletionService<Pair<Integer,Double>> pool ;
+    
     IndexMaps maps;
     int numOfThreads;
     
@@ -203,9 +202,9 @@ public class Reorderer {
     }
 
     public void decode(String inputFile,String outputFile) throws  Exception {
-        executor = Executors.newFixedThreadPool(numOfThreads);
-        pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
-        
+        ExecutorService executor =Executors.newFixedThreadPool(numOfThreads);
+        CompletionService<Pair<String,Integer>> pool =new ExecutorCompletionService<Pair<String,Integer>>(executor);
+
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 
@@ -213,11 +212,36 @@ public class Reorderer {
 
         DependencyTree tree;
         int count=0;
+        int c=0;
+        String[] output=new String[1000];
         while ((tree = DependencyReader.readNextDependencyTree(reader, universalMap, maps)) != null) {
-            writer.write(reorder(tree).toConllOutput());
+            pool.submit(new TreeReorderingThread(c, tree, this));
             count++;
-            if(count%100==0)
+            c++;
+
+            if(c==1000){
+                for(int i=0;i<c;i++){
+                    Pair<String,Integer> outputPair=pool.take().get();
+                    output[outputPair.second]=outputPair.first;
+                }
+                for(int i=0;i<c;i++){
+                    writer.write(output[i]);
+                }
+                output=new String[1000];
+                c=0;
+            }
+            if(count%1000==0) 
                 System.err.print(count + "...");
+        }
+        if(c>0){
+            for(int i=0;i<c;i++){
+                Pair<String,Integer> outputPair=pool.take().get();
+                output[outputPair.second]=outputPair.first;
+            }
+            for(int i=0;i<c;i++){
+                writer.write(output[i]);
+            }
+            c=0;
         }
         System.err.print(count+"\n");
         long end=System.currentTimeMillis();
@@ -229,8 +253,8 @@ public class Reorderer {
     }
 
     public void decodeWithAlignmentGuide(String inputFile,String intersectionFile, String outputFile) throws  Exception {
-        executor = Executors.newFixedThreadPool(numOfThreads);
-        pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
+        ExecutorService executor =Executors.newFixedThreadPool(numOfThreads);
+        CompletionService<Pair<String,Integer>> pool =new ExecutorCompletionService<Pair<String,Integer>>(executor);
 
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedReader inersectionReader = new BufferedReader(new FileReader(intersectionFile));
@@ -241,11 +265,36 @@ public class Reorderer {
         BitextDependency bitextDependency;
         
         int count=0;
+        String[] output=new String[1000];
+        int c=0;
         while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(reader, inersectionReader, universalMap, maps)) != null) {
-            writer.write(reorderWithAlignmentGuide(bitextDependency).toConllOutput());
+          pool.submit(new BitextReorderingThread(c,bitextDependency,this));
             count++;
-            if(count%100==0)
-                System.err.print(count + "...");
+            c++;
+
+            if(c==1000){
+                for(int i=0;i<c;i++){
+                    Pair<String,Integer> outputPair=pool.take().get();
+                    output[outputPair.second]=outputPair.first;
+                }
+                for(int i=0;i<c;i++){
+                    writer.write(output[i]);
+                }
+                c=0;
+                if(count%1000==0)
+                    System.err.print(count + "...");
+            }
+        }
+        if(c>0){
+            for(int i=0;i<c;i++){
+                Pair<String,Integer> outputPair=pool.take().get();
+                output[outputPair.second]=outputPair.first;
+            }
+            for(int i=0;i<c;i++){
+                writer.write(output[i]);
+            }
+            output=new String[1000];
+            c=0;
         }
         System.err.print(count+"\n");
         long end=System.currentTimeMillis();
