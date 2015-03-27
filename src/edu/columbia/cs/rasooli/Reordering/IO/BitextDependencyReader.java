@@ -1,6 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.IO;
 
 import edu.columbia.cs.rasooli.Reordering.Structures.*;
+import edu.columbia.cs.rasooli.Reordering.Training.TrainData;
 
 import java.io.*;
 import java.util.*;
@@ -428,6 +429,114 @@ public class BitextDependencyReader {
         writer.flush();
         writer.close();
         System.err.print(count + "\n");
+    }
+
+
+    public static ArrayList<TrainData> getNextTrainData(BufferedReader depReader ,BufferedReader intersectionReader, HashMap<String, String> universalMap, IndexMaps maps, HashMap<String, int[]>[] mostCommonPermutations, int max) throws Exception {
+        ArrayList<TrainData> trainData=new ArrayList<TrainData>(max);
+        
+        String line1;
+        while ((line1 = depReader.readLine()) != null) {
+            if (line1.trim().length() == 0)
+                continue;
+            String[] w = line1.trim().split("\t");
+            String[] t = depReader.readLine().trim().split("\t");
+            String[] l = depReader.readLine().trim().split("\t");
+            String[] h = depReader.readLine().trim().split("\t");
+
+            assert w.length == t.length && t.length == l.length && h.length == l.length;
+
+            String[] words = new String[w.length + 1];
+            words[0] = "ROOT";
+            for (int i = 0; i < w.length; i++)
+                words[i + 1] = w[i];
+
+            String[] tags = new String[t.length + 1];
+            tags[0] = "ROOT";
+            for (int i = 0; i < t.length; i++)
+                tags[i + 1] = t[i];
+
+            String[] labels = new String[l.length + 1];
+            labels[0] = "";
+            for (int i = 0; i < l.length; i++)
+                labels[i + 1] = l[i];
+
+            int[] heads = new int[h.length + 1];
+            heads[0] = -1;
+            for (int i = 0; i < h.length; i++)
+                heads[i + 1] = Integer.parseInt(h[i]);
+
+            Word[] wordStructs = new Word[words.length];
+            for (int i = 0; i < words.length; i++) {
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]), maps);
+            }
+
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            String[] split = intersectionReader.readLine().trim().split(" ");
+            SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
+            for (int i = 0; i < alignedWords.length; i++)
+                alignedWords[i] = new TreeSet<Integer>();
+
+            for (String s : split) {
+                String[] inds = s.split("-");
+                int d1 = Integer.parseInt(inds[0]);
+                assert d1 < words.length;
+                alignedWords[d1].add(Integer.parseInt(inds[1]));
+            }
+
+            BitextDependency bitextDependency = new BitextDependency(alignedWords, tree);
+            if (bitextDependency.getTrainableHeads().size() > 0) {
+                for (int head : bitextDependency.getTrainableHeads()) {
+                    HashSet<Integer> deps = bitextDependency.getSourceTree().getDependents(head);
+                    if (deps.size() > mostCommonPermutations.length)
+                        continue;
+
+                    TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+                    origOrderSet.add(head);
+                    for (int dep : deps)
+                        origOrderSet.add(dep);
+
+                    int index = 0;
+                    int[] ordering = new int[origOrderSet.size()];
+                    HashMap<Integer, Integer> revOrdering = new HashMap<Integer, Integer>();
+                    revOrdering.put(head, index);
+                    ordering[index++] = head;
+                    for (int d : deps) {
+                        revOrdering.put(d, index);
+                        ordering[index++] = d;
+                    }
+
+                    ContextInstance originalInstance = new ContextInstance(head, ordering, bitextDependency.getSourceTree());
+                    ArrayList<Object>[] features = originalInstance.extractMainFeatures();
+
+                    TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+
+                    SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
+                    changedOrder.put(alignedSet[head].first(), head);
+                    for (int dep : origOrderSet)
+                        changedOrder.put(alignedSet[dep].first(), dep);
+
+                    int[] goldOrder = new int[1 + deps.size()];
+                    StringBuilder goldOrderStr = new StringBuilder();
+                    int i = 0;
+                    for (int dep : changedOrder.keySet()) {
+                        goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
+                        goldOrderStr.append(revOrdering.get(changedOrder.get(dep)) + "-");
+                    }
+
+                    String goldLabel = goldOrderStr.toString();
+                    int ind = goldOrder.length - 2;
+                    if (mostCommonPermutations[ind].containsKey(goldLabel)) {
+                        trainData.add(new TrainData(ind,goldLabel,features));
+                        if(trainData.size()>=max)
+                            return trainData;
+                    }
+                }
+            }
+        }
+        if(trainData.size()==0)
+            return null;
+        return trainData;
     }
 
 }

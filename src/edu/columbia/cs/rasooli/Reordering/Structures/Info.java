@@ -19,6 +19,7 @@ public class Info {
     HashMap<Object, Double>[][][] finalWeights;
     HashMap<String,String> universalPosMap;
     int topK;
+    int featLen;
     HashMap<String,int[]>[]  mostCommonPermutations;
     IndexMaps maps;
     
@@ -29,10 +30,10 @@ public class Info {
         this.maps=maps;
 
         finalWeights = new HashMap[perceptron.length][][];
+        this.featLen= perceptron[0].getWeights()[0].length;
         
         for(int f=0;f<finalWeights.length;f++) {
            finalWeights[f]= new HashMap[perceptron[f].getWeights().length][perceptron[f].getWeights()[0].length];
-
             for (int i = 0; i < perceptron[f].getWeights().length; i++) {
                 for (int j = 0; j < perceptron[f].getWeights()[i].length; j++) {
                     finalWeights[f][i][j] = new HashMap<Object, Double>();
@@ -92,5 +93,9 @@ public class Info {
 
     public HashMap<String, int[]>[] getMostCommonPermutations() {
         return mostCommonPermutations;
+    }
+
+    public int getFeatLen() {
+        return featLen;
     }
 }

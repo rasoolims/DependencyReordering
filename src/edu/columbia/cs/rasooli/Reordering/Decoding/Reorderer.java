@@ -26,8 +26,8 @@ import java.util.concurrent.Executors;
  */
 
 public class Reorderer {
-    AveragedPerceptron classifier;
-    HashMap<String,Integer> posOrderFrequencyDic;
+    AveragedPerceptron[] classifier;
+    HashMap<String,int[]>[]  mostCommonPermutations;
     int topK;
     HashMap<String,String> universalMap;
     ExecutorService executor  ;
@@ -36,9 +36,9 @@ public class Reorderer {
     int numOfThreads;
     
     
-    public Reorderer(AveragedPerceptron classifier, HashMap<String, Integer> posOrderFrequencyDic, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
+    public Reorderer(AveragedPerceptron[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
         this.classifier = classifier;
-        this.posOrderFrequencyDic = posOrderFrequencyDic;
+        this.mostCommonPermutations = mostCommonPermutations;
         this.universalMap=universalMap;
         this.topK=topK;
         this.numOfThreads=numOfThreads; 
@@ -46,8 +46,6 @@ public class Reorderer {
     }
 
     public DependencyTree reorder(DependencyTree tree) throws Exception {
-        
-        
         HashSet<Integer> heads=new HashSet<Integer>();
         for(int h=1;h<tree.size();h++)
             if(tree.hasDep(h))
@@ -68,27 +66,31 @@ public class Reorderer {
                 origOrder[i++] = dep;
 
             ContextInstance origContext = new ContextInstance(head, origOrder, tree);
-
+            ArrayList<Object>[]  features=  origContext.extractMainFeatures();
             double bestScore = Double.NEGATIVE_INFINITY;
-            ContextInstance bestCandidate = null;
-
-
-            HashSet<ContextInstance> candidates= origContext.getPossibleContexts(posOrderFrequencyDic, topK);
+            int[] bestOrder=null;
             
-            int s=0;
-            for (ContextInstance candidate : candidates) {
-              //  pool.submit(new ScoringThread(candidate,classifier,false));
-                s++;
-            }
-
-            for(int x=0;x<s;x++){
-                FeaturedInstance featuredInstance=pool.take().get();
-                if(featuredInstance.getScore()>bestScore){
-                    bestScore = featuredInstance.getScore();
-                    bestCandidate = featuredInstance.getInstance();
+            int index= deps.size()-1;
+            if (index<mostCommonPermutations.length) {
+                int l = 0;
+                for (String label : mostCommonPermutations[index].keySet()) {
+                    double score = classifier[index].score(l, features, true);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestOrder = mostCommonPermutations[index].get(label);
+                    }
+                    l++;
                 }
             }
+
             
+                int[] newOrder = new int[origOrder.length];
+            if(bestOrder!=null)
+                for (int o = 0; o < newOrder.length; o++)
+                    newOrder[o] = origOrder[bestOrder[o]];
+            else
+                newOrder=origOrder;
+            ContextInstance bestCandidate=new ContextInstance(head,newOrder,tree);
 
             reorderingInstances.add(bestCandidate);
         }
@@ -117,7 +119,7 @@ public class Reorderer {
             writer.write(reorder(tree).toConllOutput());
             count++;
             if(count%100==0)
-                System.out.print(count + "...");
+                System.err.print(count + "...");
         }
         System.out.print(count+"\n");
         long end=System.currentTimeMillis();

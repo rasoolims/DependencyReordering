@@ -14,20 +14,25 @@ import java.util.*;
  */
 
 public class TrainData {
-    ContextInstance goldInstance;
-    ContextInstance originalInstance;
-    ArrayList<Object>[] goldFeatures;
+    int index;
+    String goldLabel;
+    ArrayList<Object>[] features;
 
-    public TrainData(ContextInstance originalInstance, ContextInstance goldInstance) throws Exception {
-        this.originalInstance = originalInstance;
-        this.goldInstance = goldInstance;
+    public TrainData(int index, String goldLabel, ArrayList<Object>[] features) {
+        this.index = index;
+        this.goldLabel = goldLabel;
+        this.features = features;
     }
 
-    public ContextInstance getGoldInstance() {
-        return goldInstance;
+    public int getIndex() {
+        return index;
     }
 
-    public ContextInstance getOriginalInstance() {
-        return originalInstance;
+    public String getGoldLabel() {
+        return goldLabel;
+    }
+
+    public ArrayList<Object>[] getFeatures() {
+        return features;
     }
 }

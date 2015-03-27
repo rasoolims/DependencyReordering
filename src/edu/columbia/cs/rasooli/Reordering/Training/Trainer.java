@@ -26,39 +26,41 @@ import java.util.zip.GZIPInputStream;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 public class Trainer {
-    HashMap<String,String> universalMap;
+    HashMap<String, String> universalMap;
     IndexMaps maps;
     int featLen;
-    HashMap<String,int[]>[]  mostCommonPermutations;
-    String trainPath;
-    String devPath;
+    HashMap<String, int[]>[] mostCommonPermutations;
+    String trainTreePath;
+    String trainIntersectionPath;
+    String devIntersectionPath;
+    String devTreePath;
     int topK;
     int maxLen;
-    AveragedPerceptron[]  classifier;
-    
-    public Trainer(String trainTreePath, String trainIntersectionPath,String devTreePath, String devIntersectionPath, String universalPOSPath, String trainPath, String devPath, int maxLen, int topK, int featLen) throws Exception {
+    AveragedPerceptron[] classifier;
+
+    public Trainer(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath, String trainPath, String devPath, int maxLen, int topK, int featLen) throws Exception {
+        this.trainIntersectionPath = trainIntersectionPath;
+        this.trainTreePath = trainTreePath;
+        this.devTreePath = devTreePath;
+        this.devIntersectionPath = devIntersectionPath;
         this.topK = topK;
         this.maxLen = maxLen;
-        this.featLen=featLen;
-        classifier=new AveragedPerceptron[maxLen];
-        for(int i=0;i<maxLen;i++)
-            classifier[i]=new AveragedPerceptron(topK, featLen);
-        
-        this.trainPath = trainPath;
-        this.devPath = devPath;
+        this.featLen = featLen;
+        classifier = new AveragedPerceptron[maxLen];
+        for (int i = 0; i < maxLen; i++)
+            classifier[i] = new AveragedPerceptron(topK, featLen);
+
         universalMap = BitextDependencyReader.createUniversalMap(universalPOSPath);
         maps = DependencyReader.readIndexMap(trainTreePath, universalMap);
         mostCommonPermutations = BitextDependencyReader.constructPosOrderFrequency(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
-        BitextDependencyReader.createTrainData(trainTreePath, trainIntersectionPath, universalMap, maps, mostCommonPermutations, trainPath);
-
-        if (!devTreePath.equals(""))
-            BitextDependencyReader.createTrainData(devTreePath, devIntersectionPath, universalMap, maps, mostCommonPermutations, devPath);
     }
-    
+
     public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {
         System.err.println("Training started...");
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
         CompletionService<FeaturedInstance> pool = new ExecutorCompletionService<FeaturedInstance>(executor);
+
+        int max = 200000;
 
         for (int i = 0; i < maxIter; i++) {
             long start = System.currentTimeMillis();
@@ -66,55 +68,47 @@ public class Trainer {
             int count = 0;
             float correct = 0;
 
-            FileInputStream fos1 = new FileInputStream(trainPath);
-            GZIPInputStream gz1 = new GZIPInputStream(fos1);
-            ObjectInputStream trainReader = new ObjectInputStream(gz1);
+            BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
+            BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
+            ArrayList<TrainData> data;
 
+            while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
+                for (TrainData trainData : data) {
+                    count++;
 
-            while (true) {
-                count++;
-                int index = trainReader.readInt();
-                if (index == -1)
-                    break;
-                String goldLabel = (String) trainReader.readObject();
-                ArrayList<Object>[] features = new ArrayList[featLen];
-                for (int f = 0; f < featLen; f++)
-                    features[f] = new ArrayList<Object>();
+                    int index = trainData.index;
+                    String goldLabel = trainData.goldLabel;
+                    ArrayList<Object>[] features = trainData.features;
 
-                int featIndex;
-                while ((featIndex = trainReader.readInt()) != -1) {
-                    Object feat = trainReader.readObject();
-                    features[featIndex].add(feat);
-                }
-
-                double bestScore = Double.NEGATIVE_INFINITY;
-                int bestLIndex = 0;
-                int goldIndex = 0;
-                int l = 0;
-                for (String label : mostCommonPermutations[index].keySet()) {
-                    double score = classifier[index].score(l, features, false);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestLIndex = l;
-                    }
-                    if (goldLabel.equals(label)) {
-                        goldIndex = l;
-                    }
-                    l++;
-                }
-
-                if (goldIndex != bestLIndex) {
-                    for (int f = 0; f < features.length; f++) {
-                        for (Object feat : features[f]) {
-                            classifier[index].updateWeight(goldIndex, f, feat, +1);
-                            classifier[index].updateWeight(bestLIndex, f, feat, -1);
+                    double bestScore = Double.NEGATIVE_INFINITY;
+                    int bestLIndex = 0;
+                    int goldIndex = 0;
+                    int l = 0;
+                    for (String label : mostCommonPermutations[index].keySet()) {
+                        double score = classifier[index].score(l, features, false);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestLIndex = l;
                         }
+                        if (goldLabel.equals(label)) {
+                            goldIndex = l;
+                        }
+                        l++;
                     }
-                } else correct++;
 
-                classifier[index].incrementIteration();
-                if (count % 10000 == 0)
-                    System.err.print(count + "...");
+                    if (goldIndex != bestLIndex) {
+                        for (int f = 0; f < features.length; f++) {
+                            for (Object feat : features[f]) {
+                                classifier[index].updateWeight(goldIndex, f, feat, +1);
+                                classifier[index].updateWeight(bestLIndex, f, feat, -1);
+                            }
+                        }
+                    } else correct++;
+
+                    classifier[index].incrementIteration();
+                    if (count % 10000 == 0)
+                        System.err.print(count + "...");
+                }
             }
             System.err.print(count + "\n");
             float correctPredictions = 100f * correct / count;
@@ -127,10 +121,9 @@ public class Trainer {
             long elapsed = (end - start) / 1000;
             System.err.println("time for training " + elapsed + " seconds");
 
-            if (!devPath.equals("")) {
-                FileInputStream fos2 = new FileInputStream(devPath);
-                GZIPInputStream gz2 = new GZIPInputStream(fos2);
-                ObjectInputStream devReader = new ObjectInputStream(gz2);
+            if (!devTreePath.equals("")) {
+                depReader = new BufferedReader(new FileReader(devTreePath));
+                intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
 
                 HashMap<Object, Double>[][][] weights = info.getFinalWeights();
                 AveragedPerceptron[] decodeClassifier = new AveragedPerceptron[weights.length];
@@ -143,47 +136,39 @@ public class Trainer {
                 count = 0;
                 correct = 0;
 
-                while (true) {
-                    count++;
-                    int index = devReader.readInt();
-                    if (index == -1)
-                        break;
-                    String goldLabel = (String) devReader.readObject();
-                    ArrayList<Object>[] features = new ArrayList[featLen];
-                    for (int f = 0; f < featLen; f++)
-                        features[f] = new ArrayList<Object>();
+                while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
+                    for (TrainData trainData : data) {
+                        count++;
 
-                    int featIndex;
-                    while ((featIndex = devReader.readInt()) != -1) {
-                        Object feat = devReader.readObject();
-                        features[featIndex].add(feat);
-                    }
+                        int index = trainData.index;
+                        String goldLabel = trainData.goldLabel;
+                        ArrayList<Object>[] features = trainData.features;
 
-                    double bestScore = Double.NEGATIVE_INFINITY;
-                    int bestLIndex = 0;
-                    int goldIndex = 0;
-                    int l = 0;
-                    for (String label : mostCommonPermutations[index].keySet()) {
-                        double score = decodeClassifier[index].score(l, features, true);
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestLIndex = l;
+                        double bestScore = Double.NEGATIVE_INFINITY;
+                        int bestLIndex = 0;
+                        int goldIndex = 0;
+                        int l = 0;
+                        for (String label : mostCommonPermutations[index].keySet()) {
+                            double score = decodeClassifier[index].score(l, features, true);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestLIndex = l;
+                            }
+                            if (goldLabel.equals(label)) {
+                                goldIndex = l;
+                            }
+                            l++;
                         }
-                        if (goldLabel.equals(label)) {
-                            goldIndex = l;
+
+                        if (goldIndex == bestLIndex) {
+                            correct++;
                         }
-                        l++;
-                    }
 
-                    if (goldIndex == bestLIndex) {
-                        correct++;
+                        if (count % 10000 == 0)
+                            System.err.print(count + "...");
                     }
-
-                    if (count % 10000 == 0)
-                        System.err.print(count + "...");
                 }
             }
-
 
             System.err.print(count + "\n");
             correctPredictions = 100f * correct / count;
