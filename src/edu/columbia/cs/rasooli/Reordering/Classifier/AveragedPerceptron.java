@@ -1,6 +1,8 @@
 package edu.columbia.cs.rasooli.Reordering.Classifier;
 
-import java.io.*;
+import edu.columbia.cs.rasooli.Reordering.Structures.CompactArray;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -12,111 +14,92 @@ import java.util.HashMap;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 public class AveragedPerceptron extends Classifier implements Serializable {
-    HashMap<Object, Double>[][] weights;
-    HashMap<Object, Double>[][] avgWeights;
+    HashMap<Object, CompactArray>[] weights;
+    HashMap<Object, CompactArray>[] avgWeights;
+    int featSize;
+    int labelSize;
 
-    public AveragedPerceptron(int labelSize,int size) {
+    public AveragedPerceptron(int labelSize, int featSize) {
         super();
-        weights = new HashMap[labelSize][size];
-        avgWeights = new HashMap[labelSize][size];
-        for (int i=0;i<labelSize;i++) {
-            for (int j = 0; j < size; j++) {
-                weights[i][j] = new HashMap<Object, Double>();
-                avgWeights[i][j] = new HashMap<Object, Double>();
+        this.featSize = featSize;
+        this.labelSize = labelSize;
+        weights = new HashMap[featSize];
+        avgWeights = new HashMap[featSize];
+        for (int j = 0; j < featSize; j++) {
+            weights[j] = new HashMap<Object, CompactArray>();
+            avgWeights[j] = new HashMap<Object, CompactArray>();
+            }
+    }
+
+    public void updateWeight(int label, int slot, Object feature, float change) {
+        CompactArray values = weights[slot].get(feature);
+        CompactArray aValues;
+        if (values == null) {
+            float[] val = new float[]{change};
+            values = new CompactArray(label, val);
+            weights[slot].put(feature, values);
+
+            float[] aval = new float[]{change * iteration};
+            aValues = new CompactArray(label, aval);
+            avgWeights[slot].put(feature, aValues);
+        } else {
+            values.expandArray(label, change);
+            (avgWeights[slot].get(feature)).expandArray(label, iteration * change);
+        }
+    }
+
+    public float[] scores(ArrayList<Object>[] features, boolean decode) {
+        float scores[] = new float[labelSize];
+        HashMap<Object, CompactArray>[] map = decode ? avgWeights : weights;
+        for (int i = 0; i < featSize; i++) {
+            if (features[i] == null)
+                continue;
+            for (Object feat : features[i]) {
+                CompactArray values = map[i].get(feat);
+                if (values != null) {
+                    int offset = values.getOffset();
+                    float[] weightVector = values.getArray();
+
+                    for (int d = offset; d < offset + weightVector.length; d++) {
+                        scores[d] += weightVector[d - offset];
+                    }
+                }
             }
         }
+        return scores;
     }
 
-    public static Classifier loadModel(String modelPath) throws  Exception {
-        ObjectInputStream reader = new ObjectInputStream(new FileInputStream(modelPath));
-        HashMap<Object, Double>[][]  avgWeights = (HashMap[][]) reader.readObject();
-        AveragedPerceptron averagedPerceptron=new AveragedPerceptron(avgWeights.length,avgWeights[0].length);
-        averagedPerceptron.avgWeights=avgWeights;
-        return averagedPerceptron;
-    }
+    public float[] decScores(ArrayList<Object>[] features) {
+        float scores[] = new float[labelSize];
+        for (int i = 0; i < featSize; i++) {
+            if (features[i] == null)
+                continue;
+            for (Object feat : features[i]) {
+                CompactArray values = weights[i].get(feat);
+                CompactArray aValues = avgWeights[i].get(feat);
+                if (values != null) {
+                    int offset = values.getOffset();
+                    float[] weightVector = values.getArray();
+                    float[] aWeightVector = aValues.getArray();
 
-    public void updateWeight(int label, int slot, Object feature, double change) {
-        if(!weights[label][slot].containsKey(feature)){
-            weights[label][slot].put(feature, change);
-        }  else{
-            weights[label][slot].put(feature, weights[label][slot].get(feature) + change);
-        }
-
-        if(!avgWeights[label][slot].containsKey(feature)){
-            avgWeights[label][slot].put(feature, iteration * change);
-        }  else{
-            avgWeights[label][slot].put(feature, avgWeights[label][slot].get(feature) + iteration * change);
-        }
-    }
-
-    @Override
-    public void saveModel(String modelPath) throws  Exception{
-        System.err.print("Writing model to the file...");
-        HashMap<Object, Double>[][] finalAverageWeight = new HashMap[weights.length][weights[0].length];
-        
-        for(int i=0;i<weights.length;i++) {
-           for(int j=0;j<weights[i].length;j++) {
-               finalAverageWeight[i][j] = new HashMap<Object, Double>();
-               for (Object feat : weights[i][j].keySet()) {
-                   double newValue = weights[i][j].get(feat) - (avgWeights[i][j].get(feat) / iteration);
-                   if (newValue != 0.0)
-                       finalAverageWeight[i][j].put(feat, newValue);
-               }
-           }
-        }
-        ObjectOutput writer = new ObjectOutputStream(new FileOutputStream(modelPath));
-        writer.writeObject(finalAverageWeight);
-        writer.flush();
-        writer.close();
-        System.err.print("done\n");
-    }
-
-    public double devScore(int label, ArrayList<Object>[] features){
-        double score=0;
-        for(int i=0;i<features.length;i++) {
-            for (Object feature : features[i]) {
-                if (weights[label][i].containsKey(feature))
-                    score +=  (weights[label][i].get(feature) -(avgWeights[label][i].get(feature)/iteration));
+                    for (int d = offset; d < offset + weightVector.length; d++) {
+                        scores[d] += weightVector[d - offset] - (aWeightVector[d - offset] / iteration);
+                    }
+                }
             }
         }
-        return score;
-    }
-    
-    public double score(int label, ArrayList<Object>[] features,boolean decode){
-        double score=0.0;
-        HashMap<Object, Double>[] map;
-        if(decode)
-            map= avgWeights[label];
-        else
-            map= weights[label];
-
-        for(int i=0;i<features.length;i++) {
-            for (Object feature : features[i]) {
-                if (map[i].containsKey(feature))
-                    score += map[i].get(feature);
-            }
-        }
-        return score;
+        return scores;
     }
 
-    @Override
-    public int size(){
-        int size=0;
-        for(int i=0;i<avgWeights.length;i++)
-            for(int j=0;j<avgWeights[i].length;j++)
-                size+=avgWeights[i][j].size();
-        return size;
-    }
-
-    public HashMap<Object, Double>[][] getWeights() {
+    public HashMap<Object, CompactArray>[] getWeights() {
         return weights;
     }
 
-    public HashMap<Object, Double>[][] getAvgWeights() {
+    public HashMap<Object, CompactArray>[] getAvgWeights() {
         return avgWeights;
     }
 
-    public void setAvgWeights(HashMap<Object, Double>[][] avgWeights) {
+    public void setAvgWeights(HashMap<Object, CompactArray>[] avgWeights) {
         this.avgWeights = avgWeights;
     }
 }

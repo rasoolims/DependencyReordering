@@ -70,15 +70,14 @@ public class Reorderer {
             int index= deps.size()-1;
             if (index<mostCommonPermutations.length) {
                 int l = 0;
+                float[] scores = classifier[index].scores(features, true);
+
                 for (String label : mostCommonPermutations[index].keySet()) {
-                    double score = classifier[index].score(l, features, true);
-                    if (score > bestScore) {
-                        bestScore = score;
+
+                    if (scores[l] > bestScore) {
+                        bestScore = scores[l];
                         bestOrder = mostCommonPermutations[index].get(label);
                     }
-                   // for(int b=0;b<mostCommonPermutations[index].get(label).length;b++)
-                   //     System.out.print(mostCommonPermutations[index].get(label)[b]+" ");
-                   // System.out.print("\n");
                     l++;
                 }
             }
@@ -182,10 +181,10 @@ public class Reorderer {
                 int index = deps.size() - 1;
                 if (index < mostCommonPermutations.length) {
                     int l = 0;
+                    float[] scores = classifier[index].scores(features, true);
                     for (String label : mostCommonPermutations[index].keySet()) {
-                        double score = classifier[index].score(l, features, true);
-                        if (score > bestScore) {
-                            bestScore = score;
+                        if (scores[l] > bestScore) {
+                            bestScore = scores[l];
                             bestOrder = mostCommonPermutations[index].get(label);
                         }
                         l++;

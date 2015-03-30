@@ -1,19 +1,15 @@
 package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
-import edu.columbia.cs.rasooli.Reordering.Decoding.DevScoringThread;
-import edu.columbia.cs.rasooli.Reordering.Decoding.ScoringThread;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
-import edu.columbia.cs.rasooli.Reordering.Structures.*;
+import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
+import edu.columbia.cs.rasooli.Reordering.Structures.Info;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -54,8 +50,6 @@ public class Trainer {
 
     public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {
         System.err.println("Training started...");
-        ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
-        CompletionService<Pair<Integer,Double>> pool = new ExecutorCompletionService<Pair<Integer,Double>>(executor);
 
         int max = 200000;
 
@@ -74,32 +68,24 @@ public class Trainer {
                     count++;
 
                     int index = trainData.index;
-                    String goldLabel = trainData.goldLabel;
                     ArrayList<Object>[] features = trainData.features;
+                    float bestScore = Float.NEGATIVE_INFINITY;
+                    String goldLabel = trainData.goldLabel;
+                    int bestLIndex = -1;
+                    int goldIndex = -1;
+                    float[] scores = classifier[index].scores(features, false);
 
-                    double bestScore = Double.NEGATIVE_INFINITY;
-                    int bestLIndex = 0;
-                    int goldIndex = 0;
                     int l = 0;
                     for (String label : mostCommonPermutations[index].keySet()) {
-                        pool.submit(new ScoringThread(l,features,classifier[index],false));
-                        
-                        if (goldLabel.equals(label))
+                        if (scores[l] > bestScore) {
+                            bestScore = scores[l];
+                            bestLIndex = l;
+                        }
+                        if (label.equals(goldLabel))
                             goldIndex = l;
                         l++;
                     }
                     
-                    for(int f=0;f<l;f++){
-                        Pair<Integer,Double> pair=pool.take().get();
-                        double score = pair.second;
-                        int ind=pair.first;
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestLIndex = ind;
-                        }
-                    }
-                    
-
                     if (goldIndex != bestLIndex) {
                         for (int f = 0; f < features.length; f++) {
                             for (Object feat : features[f]) {
@@ -118,6 +104,7 @@ public class Trainer {
             float correctPredictions = 100f * correct / count;
             System.err.print("Correct prediction: " + correctPredictions + "\n");
             Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
+
             info.saveModel(modelPath + "_iter" + (i + 1));
             long end = System.currentTimeMillis();
             long elapsed = (end - start) / 1000;
@@ -136,28 +123,23 @@ public class Trainer {
                         count++;
 
                         int index = trainData.index;
-                        String goldLabel = trainData.goldLabel;
                         ArrayList<Object>[] features = trainData.features;
 
-                        double bestScore = Double.NEGATIVE_INFINITY;
-                        int bestLIndex = 0;
-                        int goldIndex = 0;
+                        float bestScore = Float.NEGATIVE_INFINITY;
+                        String goldLabel = trainData.goldLabel;
+                        int bestLIndex = -1;
+                        int goldIndex = -1;
+                        float[] scores = classifier[index].decScores(features);
+
                         int l = 0;
                         for (String label : mostCommonPermutations[index].keySet()) {
-                            pool.submit(new DevScoringThread(l, features, classifier[index]));
-                            if (goldLabel.equals(label))
+                            if (scores[l] > bestScore) {
+                                bestScore = scores[l];
+                                bestLIndex = l;
+                            }
+                            if (label.equals(goldLabel))
                                 goldIndex = l;
                             l++;
-                        }
-                        
-                        for(int f=0;f<l;f++){
-                            Pair<Integer,Double> pair=pool.take().get();
-                            double score = pair.second;
-                            int ind=pair.first;
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestLIndex = ind;
-                            }
                         }
                         
                         if (goldIndex == bestLIndex) {
@@ -174,7 +156,5 @@ public class Trainer {
             correctPredictions = 100f * correct / count;
             System.err.print("Correct  dev prediction: " + correctPredictions + "\n");
         }
-
-        executor.shutdown();
     }
 }

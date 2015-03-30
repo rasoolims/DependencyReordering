@@ -16,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
  */
 
 public class Info {
-    HashMap<Object, Double>[][][] finalWeights;
+    HashMap<Object, CompactArray>[][] finalWeights;
     HashMap<String,String> universalPosMap;
     int topK;
     int featLen;
@@ -29,19 +29,17 @@ public class Info {
         this.mostCommonPermutations=mostCommonPermutations;
         this.maps=maps;
 
-        finalWeights = new HashMap[perceptron.length][][];
-        this.featLen= perceptron[0].getWeights()[0].length;
+        finalWeights = new HashMap[perceptron.length][];
+        this.featLen = perceptron[0].getWeights().length;
         
         for(int f=0;f<finalWeights.length;f++) {
-           finalWeights[f]= new HashMap[perceptron[f].getWeights().length][perceptron[f].getWeights()[0].length];
+            finalWeights[f] = new HashMap[perceptron[f].getWeights().length];
             for (int i = 0; i < perceptron[f].getWeights().length; i++) {
-                for (int j = 0; j < perceptron[f].getWeights()[i].length; j++) {
-                    finalWeights[f][i][j] = new HashMap<Object, Double>();
-                    for (Object feat : perceptron[f].getWeights()[i][j].keySet()) {
-                        double newValue = perceptron[f].getWeights()[i][j].get(feat) - (perceptron[f].getAvgWeights()[i][j].get(feat) / perceptron[f].getIteration());
-                        if (newValue != 0.0)
-                            finalWeights[f][i][j].put(feat, newValue);
-                    }
+                finalWeights[f][i] = new HashMap<Object, CompactArray>();
+                for (Object feat : perceptron[f].getWeights()[i].keySet()) {
+                    CompactArray vals = perceptron[f].getWeights()[i].get(feat);
+                    CompactArray avgVals = perceptron[f].getAvgWeights()[i].get(feat);
+                    finalWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, perceptron[f].getIteration()));
                 }
             }
         }
@@ -53,7 +51,7 @@ public class Info {
         GZIPInputStream gz = new GZIPInputStream(fos);
 
         ObjectInputStream reader = new ObjectInputStream(gz);
-        finalWeights = (HashMap<Object, Double>[][][]) reader.readObject();
+        finalWeights = (HashMap<Object, CompactArray>[][]) reader.readObject();
         mostCommonPermutations = (HashMap<String,int[]>[]) reader.readObject();
         topK = (Integer) reader.readObject();
         universalPosMap = ( HashMap<String,String>) reader.readObject();
@@ -75,8 +73,19 @@ public class Info {
         System.err.print("done\n");
     }
 
-    public HashMap<Object, Double>[][][] getFinalWeights() {
+    public HashMap<Object, CompactArray>[][] getFinalWeights() {
         return finalWeights;
+    }
+
+    private CompactArray getAveragedCompactArray(CompactArray ca, CompactArray aca, int iteration) {
+        int offset = ca.getOffset();
+        float[] a = ca.getArray();
+        float[] aa = aca.getArray();
+        float[] aNew = new float[a.length];
+        for (int i = 0; i < a.length; i++) {
+            aNew[i] = a[i] - (aa[i] / iteration);
+        }
+        return new CompactArray(offset, aNew);
     }
 
     public HashMap<String, String> getUniversalPosMap() {

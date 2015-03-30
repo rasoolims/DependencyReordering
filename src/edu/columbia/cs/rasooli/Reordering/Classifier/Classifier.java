@@ -1,7 +1,5 @@
 package edu.columbia.cs.rasooli.Reordering.Classifier;
 
-import java.util.ArrayList;
-
 /**
  * Created by Mohammad Sadegh Rasooli.
  * ML-NLP Lab, Department of Computer Science, Columbia University
@@ -16,13 +14,10 @@ public abstract class Classifier {
         iteration = 1;
     }
 
-    public abstract void saveModel(String modelPath) throws Exception;
 
     public void incrementIteration() {
         iteration++;
     }
-
-    public abstract int size();
 
     public int getIteration() {
         return iteration;
