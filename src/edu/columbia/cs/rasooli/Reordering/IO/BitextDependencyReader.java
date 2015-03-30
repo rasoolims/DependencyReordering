@@ -168,7 +168,7 @@ public class BitextDependencyReader {
         return bitextDependency;
     }
 
-    public static HashMap<String, int[]>[] constructPosOrderFrequency(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int topK) throws Exception {
+    public static HashMap<String, int[]>[] constructMostCommonOrderings(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int topK) throws Exception {
         HashMap<String, Pair<Integer, int[]>>[] posOrderMap = new HashMap[maxLength];
         for (int i = 0; i < posOrderMap.length; i++)
             posOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
@@ -246,7 +246,7 @@ public class BitextDependencyReader {
                     ordering[index++] = head;
                     for (int d : deps) {
                         revOrdering.put(d, index);
-                        ordering[index++] = d;
+                            ordering[index++] = d;
                     }
 
                     TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();

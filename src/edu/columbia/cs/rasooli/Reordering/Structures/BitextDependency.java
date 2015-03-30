@@ -41,7 +41,9 @@ public class BitextDependency {
         HashSet<Integer> deps = sourceTree.getDependents(initHead);
         if (deps.size() == 0)
             return;
-
+        if (alignedWords[initHead].size() == 0)
+            return;
+        
         boolean canMake = true;
 
         if (alignedWords[initHead].size() == 0)
@@ -54,10 +56,12 @@ public class BitextDependency {
             fillInTrainableHeads(heads, d);
         }
 
+       HashSet<Integer> ws=new HashSet<Integer>(deps);
+        ws.add(initHead);
         // condition 2
         if (canMake) {
-            for (int d1 : deps) {
-                for (int d2 : deps) {
+            for (int d1 : ws) {
+                for (int d2 : ws) {
                     if (d1 == d2)
                         continue;
                     HashSet<Integer> f1 = new HashSet<Integer>(alignedWords[d1]);
@@ -75,7 +79,7 @@ public class BitextDependency {
 
         // condition 3
         if (canMake) {
-            for (int d1 : deps) {
+            for (int d1 : ws) {
                 if (alignedWords[d1].size() > 1) {
                     int first = alignedWords[d1].first();
                     int last = alignedWords[d1].last();

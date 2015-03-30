@@ -7,17 +7,13 @@ import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.*;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -53,7 +49,7 @@ public class Trainer {
 
         universalMap = BitextDependencyReader.createUniversalMap(universalPOSPath);
         maps = DependencyReader.readIndexMap(trainTreePath, universalMap);
-        mostCommonPermutations = BitextDependencyReader.constructPosOrderFrequency(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
+        mostCommonPermutations = BitextDependencyReader.constructMostCommonOrderings(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
     }
 
     public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {

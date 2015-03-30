@@ -14,6 +14,8 @@ public class Main {
         String filePath = new File("").getAbsolutePath();
         String p1 = filePath + "/sample_data/parse.mst.en";
         String p2 = filePath + "/sample_data/intersection.txt";
+      //  p1="/tmp/parse.train";
+      //  p2="/tmp/intersection.train";
         String p3 = filePath + "/sample_data/en-ptb.map";
         String p4 = filePath + "/sample_data/parse.mst.en.dev";
         String p5 = filePath + "/sample_data/intersection.txt.dev";

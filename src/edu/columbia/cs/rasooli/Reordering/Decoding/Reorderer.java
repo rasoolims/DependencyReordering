@@ -76,6 +76,9 @@ public class Reorderer {
                         bestScore = score;
                         bestOrder = mostCommonPermutations[index].get(label);
                     }
+                   // for(int b=0;b<mostCommonPermutations[index].get(label).length;b++)
+                   //     System.out.print(mostCommonPermutations[index].get(label)[b]+" ");
+                   // System.out.print("\n");
                     l++;
                 }
             }
@@ -87,6 +90,10 @@ public class Reorderer {
                     newOrder[o] = origOrder[bestOrder[o]];
             else
                 newOrder=origOrder;
+            
+           // for(int b=0;b<bestOrder.length;b++)
+             //   System.out.print(bestOrder[b]+" ");
+            //System.out.print("\n---b----\n");
             ContextInstance bestCandidate=new ContextInstance(head,newOrder,tree);
 
             reorderingInstances.add(bestCandidate);
@@ -148,6 +155,8 @@ public class Reorderer {
                     else
                         newOrder = ordering;
 
+                    
+                    
                     ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
                     reorderingInstances.add(bestCandidate);
                 }catch (Exception ex){

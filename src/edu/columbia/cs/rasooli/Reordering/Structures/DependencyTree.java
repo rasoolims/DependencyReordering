@@ -117,6 +117,7 @@ public class DependencyTree {
                     int dep = instanceOrder[j];
                     if (dep == head) {
                         newOrder[currentIndex] = dep;
+                     //   System.out.println("s1\t"+currentIndex + "\t" + dep);
                         newIndices[dep] = currentIndex;
                         currentIndex++;
                     } else {
@@ -127,6 +128,7 @@ public class DependencyTree {
                         for (int d : orderedSub) {
                             try {
                                 newOrder[currentIndex] = order[d];
+                         //       System.out.println("s2\t"+currentIndex+"\t"+order[d]);
                                 newIndices[order[d]] = currentIndex;
                             }catch (Exception ex){
 
@@ -140,12 +142,14 @@ public class DependencyTree {
                 break;
             } else {
                 newOrder[i] = order[i];
+             //   System.out.println("s0\t"+i+"\t"+order[i]);
                 newIndices[ order[i]] =i;
             }
         }
 
         for (int i = nextIndex; i < order.length; i++) {
             newOrder[i] = order[i];
+          //  System.out.println("s3\t"+i+"\t"+order[i]);
             newIndices[  order[i] ] = i;
         }
 
@@ -159,11 +163,24 @@ public class DependencyTree {
             iset.add(newIndices[i]);
         
         if(set.size()<newOrder.length || iset.size()<newIndices.length) {
-            System.out.print("ERROR!");
+           System.out.println(set.size());
+            System.out.println(iset.size());
+            System.out.println(newOrder.length);
+            for(int i=0;i<newOrder.length;i++)
+                System.out.print(newOrder[i]+" ");
+            System.out.println("\n" + newIndices.length);
+            for(int i=0;i<order.length;i++)
+                System.out.print(order[i]+" ");
+            System.out.println("");
+            for(int i=0;i<instanceOrder.length;i++)
+                System.out.print(instanceOrder[i]+" ");
+            System.out.println("ERROR!");
+
+            System.exit(0);
         }
         
-        tree.order = newOrder;
-        tree.indices = newIndices;
+        order = newOrder;
+        indices = newIndices;
 
         return tree;
     }
