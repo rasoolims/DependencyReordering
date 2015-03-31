@@ -173,7 +173,7 @@ public class BitextDependencyReader {
         for (int i = 0; i < posOrderMap.length; i++)
             posOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
 
-        System.err.print("Constructing frequency maps...");
+        System.err.print("Constructing common reorderings...");
 
         BufferedReader depReader = new BufferedReader(new FileReader(parsedFilePath));
         BufferedReader intersectionReader = new BufferedReader(new FileReader(alignIntersectionPath));
@@ -277,7 +277,7 @@ public class BitextDependencyReader {
                 }
             }
             count++;
-            if (count % 10000 == 0)
+            if (count % 1000000 == 0)
                 System.err.print(count + "...");
         }
 
