@@ -57,7 +57,9 @@ public class Trainer {
             long start = System.currentTimeMillis();
             System.err.println("\nIteration: " + (i + 1) + "...");
             int count = 0;
-            float correct = 0;
+            int cCount = 0;
+            float[] correct = new float[mostCommonPermutations.length];
+            int[] sepCount = new int[mostCommonPermutations.length];
 
             BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
             BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
@@ -93,7 +95,11 @@ public class Trainer {
                                 classifier[index].updateWeight(bestLIndex, f, feat, -1);
                             }
                         }
-                    } else correct++;
+                    } else {
+                        correct[index]++;
+                        cCount++;
+                    }
+                    sepCount[index]++;
 
                     classifier[index].incrementIteration();
                     if (count % 10000 == 0)
@@ -101,11 +107,15 @@ public class Trainer {
                 }
             }
             System.err.print(count + "\n");
-            float correctPredictions = 100f * correct / count;
-            System.err.print("Correct prediction: " + correctPredictions + "\n");
+            float correctPredictions = 100f * cCount / count;
+            System.err.print("Correct prediction :" + correctPredictions + "\n");
             Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
 
+            if (i == 0)
+                info.saveInitModel(modelPath);
+
             info.saveModel(modelPath + "_iter" + (i + 1));
+
             long end = System.currentTimeMillis();
             long elapsed = (end - start) / 1000;
             System.err.println("time for training " + elapsed + " seconds");
@@ -116,7 +126,8 @@ public class Trainer {
                 intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
 
                 count = 0;
-                correct = 0;
+                correct = new float[mostCommonPermutations.length];
+                sepCount = new int[mostCommonPermutations.length];
 
                 while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
                     for (TrainData trainData : data) {
@@ -141,10 +152,10 @@ public class Trainer {
                                 goldIndex = l;
                             l++;
                         }
-                        
-                        if (goldIndex == bestLIndex) {
-                            correct++;
-                        }
+
+                        if (goldIndex == bestLIndex)
+                            correct[index]++;
+                        sepCount[index]++;
 
                         if (count % 10000 == 0)
                             System.err.print(count + "...");
@@ -153,8 +164,10 @@ public class Trainer {
             }
 
             System.err.print(count + "\n");
-            correctPredictions = 100f * correct / count;
-            System.err.print("Correct  dev prediction: " + correctPredictions + "\n");
+            for (int b = 0; b < mostCommonPermutations.length; b++) {
+                correctPredictions = 100f * correct[b] / sepCount[b];
+                System.err.print("Correct prediction " + b + ":" + correctPredictions + "\n");
+            }
         }
     }
 }

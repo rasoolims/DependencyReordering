@@ -45,31 +45,54 @@ public class Info {
         }
     }
 
-
-    public Info(String modelPath)throws Exception {
+    public Info(String modelPath, int[] tunedIterations) throws Exception {
         FileInputStream fos = new FileInputStream(modelPath);
         GZIPInputStream gz = new GZIPInputStream(fos);
 
         ObjectInputStream reader = new ObjectInputStream(gz);
-        finalWeights = (HashMap<Object, CompactArray>[][]) reader.readObject();
         mostCommonPermutations = (HashMap<String,int[]>[]) reader.readObject();
         topK = (Integer) reader.readObject();
         universalPosMap = ( HashMap<String,String>) reader.readObject();
         maps = (IndexMaps) reader.readObject();
+        featLen = reader.readInt();
+
+        finalWeights = new HashMap[tunedIterations.length][];
+        for (int i = 0; i < tunedIterations.length; i++) {
+            int iter = tunedIterations[i];
+            String mPath = modelPath + "_iter" + iter + "_len_" + i;
+            fos = new FileInputStream(mPath);
+            gz = new GZIPInputStream(fos);
+
+            reader = new ObjectInputStream(gz);
+            finalWeights[i] = (HashMap<Object, CompactArray>[]) reader.readObject();
+        }
+
     }
-    
-    public void saveModel(String modelPath) throws  Exception{
+
+    public void saveInitModel(String modelPath) throws Exception {
         FileOutputStream fos = new FileOutputStream(modelPath);
         GZIPOutputStream gz = new GZIPOutputStream(fos);
 
         ObjectOutput writer = new ObjectOutputStream(gz);
-        writer.writeObject(finalWeights);
         writer.writeObject(mostCommonPermutations);
         writer.writeObject(topK);
         writer.writeObject(universalPosMap);
         writer.writeObject(maps);
+        writer.writeInt(featLen);
         writer.flush();
         writer.close();
+
+    }
+
+    public void saveModel(String modelPath) throws Exception {
+        for (int i = 0; i < finalWeights.length; i++) {
+            FileOutputStream fos = new FileOutputStream(modelPath + "_len_" + i);
+            GZIPOutputStream gz = new GZIPOutputStream(fos);
+            ObjectOutput writer = new ObjectOutputStream(gz);
+            writer.writeObject(finalWeights[i]);
+            writer.flush();
+            writer.close();
+        }
         System.err.print("done\n");
     }
 

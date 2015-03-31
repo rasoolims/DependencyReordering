@@ -22,6 +22,7 @@ public class Options {
     public int numOfThreads;
     public boolean decodeWithAlignment=false;
     public boolean decode=false;
+    public int[] tunedIterations;
 
     public int maxIter;
     public String modelPath;
@@ -37,6 +38,7 @@ public class Options {
         numOfThreads=8;
         decodeWithAlignment=false;
         decode=false;
+        tunedIterations = null;
     }
     
     public Options(String[] args){
@@ -78,6 +80,12 @@ public class Options {
                 inputIntersectionFile=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-o"))
                 outputFile=new File(args[i+1]).getAbsolutePath();
+            else if (args[i].equals("-tune")) {
+                String[] tunes = args[i + 1].trim().split(",");
+                tunedIterations = new int[tunes.length];
+                for (int j = 0; j < tunes.length; j++)
+                    tunedIterations[j] = Integer.parseInt(tunes[j]);
+            }
         }
     }
     
@@ -90,10 +98,10 @@ public class Options {
         builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)]\n");
        
         builder.append("\nto reorder input trees\n");
-        builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)]\n");
+        builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)] -tune [numbers separated by comma]\n");
 
         builder.append("\nto reorder input trees with alignment guide\n");
-        builder.append("java -jar reorderer.jar  decode_align -m [model-file] -i [input-file] -is [input-alignment-intersection-file] -o [output-file]  -nt [#threads(default:8)]\n");
+        builder.append("java -jar reorderer.jar  decode_align -m [model-file] -i [input-file] -is [input-alignment-intersection-file] -o [output-file]  -nt [#threads(default:8)]  -tune [numbers separated by comma]\n");
 
         
         builder.append("\nargument order is not important!\n");
@@ -103,9 +111,9 @@ public class Options {
     }
     
     public boolean hasSufficientArguments() {
-        if (decode && inputFile != null && outputFile != null && modelPath != null)
+        if (decode && tunedIterations != null && inputFile != null && outputFile != null && modelPath != null)
             return true;
-        if (decodeWithAlignment && inputFile != null && inputIntersectionFile != null && outputFile != null && modelPath != null)
+        if (decodeWithAlignment && tunedIterations != null && inputFile != null && inputIntersectionFile != null && outputFile != null && modelPath != null)
             return true;
         if (train && trainIntersectionPath != null && trainTreePath != null && modelPath != null && universalPOSPath != null)
             return true;

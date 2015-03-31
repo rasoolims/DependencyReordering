@@ -33,7 +33,7 @@ public class Main {
                     trainer.trainWithPerceptron(options.maxIter,options.modelPath,options.numOfThreads);
                 }
                 else if(options.decode || options.decodeWithAlignment){
-                    Info info=new Info(options.modelPath);
+                    Info info = new Info(options.modelPath, options.tunedIterations);
                     AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];
                     for(int i=0;i<classifier.length;i++) {
                         classifier[i]=new AveragedPerceptron(info.getTopK(), info.getFeatLen());
@@ -54,7 +54,8 @@ public class Main {
            Trainer trainer=new Trainer(p1, p2, p4, p5, p3,p1+".train",p4+".dev",7,20,324);
             trainer.trainWithPerceptron(3,p6,4);
 
-            Info info=new Info(p6+"_iter3");
+            int[] tuned = {3, 3, 3, 3, 3, 3, 3};
+            Info info = new Info(p6, tuned);
             AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];
             for(int i=0;i<classifier.length;i++) {
              classifier[i]=new AveragedPerceptron(info.getTopK(), info.getFeatLen());

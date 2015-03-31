@@ -28,7 +28,7 @@ public class AveragedPerceptron extends Classifier implements Serializable {
         for (int j = 0; j < featSize; j++) {
             weights[j] = new HashMap<Object, CompactArray>();
             avgWeights[j] = new HashMap<Object, CompactArray>();
-            }
+        }
     }
 
     public void updateWeight(int label, int slot, Object feature, float change) {
