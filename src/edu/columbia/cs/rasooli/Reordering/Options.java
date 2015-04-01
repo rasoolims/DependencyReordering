@@ -1,5 +1,8 @@
 package edu.columbia.cs.rasooli.Reordering;
 
+import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
+import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
+
 import java.io.File;
 
 /**
@@ -23,6 +26,8 @@ public class Options {
     public boolean decodeWithAlignment=false;
     public boolean decode=false;
     public int[] tunedIterations;
+    public ClassifierType classifierType;
+    public double pegasos_lambda=0.0001;
 
     public int maxIter;
     public String modelPath;
@@ -39,6 +44,8 @@ public class Options {
         decodeWithAlignment=false;
         decode=false;
         tunedIterations = null;
+        classifierType=ClassifierType.perceptron;
+        pegasos_lambda=0.0001;
     }
     
     public Options(String[] args){
@@ -66,10 +73,18 @@ public class Options {
                 devIntersectionPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-p"))
                 universalPOSPath=new File(args[i+1]).getAbsolutePath();
+            else if(args[i].equals("-c")) {
+                if (args[i + 1].equals("perceptron"))
+                    classifierType = ClassifierType.perceptron;
+                else if (args[i + 1].equals("pegasos"))
+                    classifierType = ClassifierType.pegasos;
+            }
             else if(args[i].equals("-m"))
                 modelPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-iter"))
                 maxIter = Integer.parseInt(args[i + 1]);
+                else if(args[i].equals("-l"))
+                    pegasos_lambda = Float.parseFloat(args[i + 1]);
             else if(args[i].equals("-nt"))
                 numOfThreads = Integer.parseInt(args[i + 1]);
             else if(args[i].equals("-top"))
@@ -95,7 +110,8 @@ public class Options {
         builder.append("to train a model\n");
         builder.append("java -jar reorderer.jar train -tt [train-tree-file] -ti [train-intersection-file] ");
         builder.append(" -dt [dev-tree-file(optional)] -di [dev-intersection-file(optional)] -m [model-file] -p [universal-pos-file] ");
-        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)]\n");
+        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)] -c [perceptron or pegasos (default:perceptron)] -l [pegasos_lambda(default:0.0001)]\n");
+        
        
         builder.append("\nto reorder input trees\n");
         builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)] -tune [numbers separated by comma]\n");
@@ -117,6 +133,7 @@ public class Options {
             return true;
         if (train && trainIntersectionPath != null && trainTreePath != null && modelPath != null && universalPOSPath != null)
             return true;
+        System.out.println(toString());
         return false;
     }
     
@@ -132,6 +149,9 @@ public class Options {
             builder.append("universal-pos: "+universalPOSPath+"\n");
             builder.append("training-iterations: "+maxIter+"\n");
             builder.append("topK: "+topK+"\n");
+            builder.append("classifier_type: "+classifierType.toString()+"\n");
+            if(classifierType==ClassifierType.pegasos)
+            builder.append("lambda: "+pegasos_lambda+"\n");
         }  else{
             builder.append("model: "+modelPath+"\n");
             builder.append("input-file: "+inputFile+"\n");

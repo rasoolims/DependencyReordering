@@ -1,6 +1,8 @@
 package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
+import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
+import edu.columbia.cs.rasooli.Reordering.Classifier.OnlinePegasos;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
@@ -29,7 +31,7 @@ public class Trainer {
     String devTreePath;
     int topK;
     int maxLen;
-    AveragedPerceptron[] classifier;
+    Classifier[] classifier;
 
     public Trainer(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath, String trainPath, String devPath, int maxLen, int topK, int featLen) throws Exception {
         this.trainIntersectionPath = trainIntersectionPath;
@@ -39,9 +41,7 @@ public class Trainer {
         this.topK = topK;
         this.maxLen = maxLen;
         this.featLen = featLen;
-        classifier = new AveragedPerceptron[maxLen];
-        for (int i = 0; i < maxLen; i++)
-            classifier[i] = new AveragedPerceptron(topK, featLen);
+        
 
         universalMap = BitextDependencyReader.createUniversalMap(universalPOSPath);
         maps = DependencyReader.readIndexMap(trainTreePath, universalMap);
@@ -50,7 +50,10 @@ public class Trainer {
 
     public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {
         System.err.println("Training started...");
-
+        classifier = new AveragedPerceptron[maxLen];
+        for (int i = 0; i < maxLen; i++)
+            classifier[i] = new AveragedPerceptron(topK, featLen);
+        
         int max = 200000;
 
         for (int i = 0; i < maxIter; i++) {
@@ -58,7 +61,7 @@ public class Trainer {
             System.err.println("\nIteration: " + (i + 1) + "...");
             int count = 0;
             int cCount = 0;
-            float[] correct = new float[mostCommonPermutations.length];
+            double[] correct = new double[mostCommonPermutations.length];
             int[] sepCount = new int[mostCommonPermutations.length];
 
             BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
@@ -71,11 +74,11 @@ public class Trainer {
 
                     int index = trainData.index;
                     ArrayList<Object>[] features = trainData.features;
-                    float bestScore = Float.NEGATIVE_INFINITY;
+                    double bestScore = Double.NEGATIVE_INFINITY;
                     String goldLabel = trainData.goldLabel;
                     int bestLIndex = -1;
                     int goldIndex = -1;
-                    float[] scores = classifier[index].scores(features, false);
+                    double[] scores = classifier[index].scores(features, false);
 
                     int l = 0;
                     for (String label : mostCommonPermutations[index].keySet()) {
@@ -107,7 +110,7 @@ public class Trainer {
                 }
             }
             System.err.print(count + "\n");
-            float correctPredictions = 100f * cCount / count;
+            double correctPredictions = 100f * cCount / count;
             System.err.print("Correct prediction :" + correctPredictions + "\n");
             Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
 
@@ -126,7 +129,7 @@ public class Trainer {
                 intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
 
                 count = 0;
-                correct = new float[mostCommonPermutations.length];
+                correct = new double[mostCommonPermutations.length];
                 sepCount = new int[mostCommonPermutations.length];
 
                 while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
@@ -136,11 +139,11 @@ public class Trainer {
                         int index = trainData.index;
                         ArrayList<Object>[] features = trainData.features;
 
-                        float bestScore = Float.NEGATIVE_INFINITY;
+                        double bestScore = Double.NEGATIVE_INFINITY;
                         String goldLabel = trainData.goldLabel;
                         int bestLIndex = -1;
                         int goldIndex = -1;
-                        float[] scores = classifier[index].decScores(features);
+                        double[] scores = classifier[index].scores(features);
 
                         int l = 0;
                         for (String label : mostCommonPermutations[index].keySet()) {
@@ -170,4 +173,127 @@ public class Trainer {
             }
         }
     }
+
+    public void trainWithPegasos(int maxIter, String modelPath, double lambda, int numOfThreads) throws Exception {
+        System.err.println("Training started...");
+        classifier = new OnlinePegasos[maxLen];
+        for (int i = 0; i < maxLen; i++)
+            classifier[i] = new OnlinePegasos(topK, featLen,lambda);
+        
+        int max = 200000;
+
+        for (int i = 0; i < maxIter; i++) {
+            long start = System.currentTimeMillis();
+            System.err.println("\nIteration: " + (i + 1) + "...");
+            int count = 0;
+            int cCount = 0;
+            double[] correct = new double[mostCommonPermutations.length];
+            int[] sepCount = new int[mostCommonPermutations.length];
+
+            BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
+            BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
+            ArrayList<TrainData> data;
+
+            while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
+                for (TrainData trainData : data) {
+                    count++;
+
+                    int index = trainData.index;
+                    ArrayList<Object>[] features = trainData.features;
+                    double bestScore = Double.NEGATIVE_INFINITY;
+                    String goldLabel = trainData.goldLabel;
+                    int bestLIndex = -1;
+                    int goldIndex = -1;
+                    double[] scores = classifier[index].scores(features, false);
+
+                    int l = 0;
+                    for (String label : mostCommonPermutations[index].keySet()) {
+                        if (scores[l] > bestScore) {
+                            bestScore = scores[l];
+                            bestLIndex = l;
+                        }
+                        if (label.equals(goldLabel))
+                            goldIndex = l;
+                        l++;
+                    }
+
+                    if (goldIndex != bestLIndex) {
+                        OnlinePegasos pegas=(OnlinePegasos)classifier[index];
+                        pegas.updateWeights(goldIndex,bestLIndex,features);
+                    } else {
+                        correct[index]++;
+                        cCount++;
+                    }
+                    sepCount[index]++;
+
+                    classifier[index].incrementIteration();
+                    if (count % 10000 == 0)
+                        System.err.print(count + "...");
+                }
+            }
+            System.err.print(count + "\n");
+            double correctPredictions = 100f * cCount / count;
+            System.err.print("Correct prediction :" + correctPredictions + "\n");
+            Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
+
+            if (i == 0)
+                info.saveInitModel(modelPath);
+
+            info.saveModel(modelPath + "_iter" + (i + 1));
+
+            long end = System.currentTimeMillis();
+            long elapsed = (end - start) / 1000;
+            System.err.println("time for training " + elapsed + " seconds");
+
+
+            if (!devTreePath.equals("")) {
+                depReader = new BufferedReader(new FileReader(devTreePath));
+                intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
+
+                count = 0;
+                correct = new double[mostCommonPermutations.length];
+                sepCount = new int[mostCommonPermutations.length];
+
+                while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
+                    for (TrainData trainData : data) {
+                        count++;
+
+                        int index = trainData.index;
+                        ArrayList<Object>[] features = trainData.features;
+
+                        double bestScore = Double.NEGATIVE_INFINITY;
+                        String goldLabel = trainData.goldLabel;
+                        int bestLIndex = -1;
+                        int goldIndex = -1;
+                        double[] scores = classifier[index].scores(features);
+
+                        int l = 0;
+                        for (String label : mostCommonPermutations[index].keySet()) {
+                            if (scores[l] > bestScore) {
+                                bestScore = scores[l];
+                                bestLIndex = l;
+                            }
+                            if (label.equals(goldLabel))
+                                goldIndex = l;
+                            l++;
+                        }
+
+                        if (goldIndex == bestLIndex)
+                            correct[index]++;
+                        sepCount[index]++;
+
+                        if (count % 10000 == 0)
+                            System.err.print(count + "...");
+                    }
+                }
+            }
+
+            System.err.print(count + "\n");
+            for (int b = 0; b < mostCommonPermutations.length; b++) {
+                correctPredictions = 100f * correct[b] / sepCount[b];
+                System.err.print("Correct prediction " + b + ":" + correctPredictions + "\n");
+            }
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
+import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.*;
@@ -24,7 +25,7 @@ import java.util.concurrent.Executors;
  */
 
 public class Reorderer {
-    AveragedPerceptron[] classifier;
+    Classifier[] classifier;
     HashMap<String,int[]>[]  mostCommonPermutations;
     int topK;
     HashMap<String,String> universalMap;
@@ -33,7 +34,7 @@ public class Reorderer {
     int numOfThreads;
     
     
-    public Reorderer(AveragedPerceptron[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
+    public Reorderer(Classifier[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
         this.classifier = classifier;
         this.mostCommonPermutations = mostCommonPermutations;
         this.universalMap=universalMap;
@@ -70,7 +71,7 @@ public class Reorderer {
             int index= deps.size()-1;
             if (index<mostCommonPermutations.length) {
                 int l = 0;
-                float[] scores = classifier[index].scores(features, true);
+                double[] scores = classifier[index].scores(features, true);
 
                 for (String label : mostCommonPermutations[index].keySet()) {
 
@@ -181,7 +182,7 @@ public class Reorderer {
                 int index = deps.size() - 1;
                 if (index < mostCommonPermutations.length) {
                     int l = 0;
-                    float[] scores = classifier[index].scores(features, true);
+                    double[] scores = classifier[index].scores(features, true);
                     for (String label : mostCommonPermutations[index].keySet()) {
                         if (scores[l] > bestScore) {
                             bestScore = scores[l];
@@ -256,7 +257,7 @@ public class Reorderer {
         }
         System.err.print(count+"\n");
         long end=System.currentTimeMillis();
-        float elapsed=(float)(end-start)/count;
+        double elapsed=(double)(end-start)/count;
         System.err.println("time for decoding "+elapsed + " ms per sentence");
         writer.flush();
         writer.close();
@@ -309,7 +310,7 @@ public class Reorderer {
         }
         System.err.print(count+"\n");
         long end=System.currentTimeMillis();
-        float elapsed=(float)(end-start)/count;
+        double elapsed=(double)(end-start)/count;
         System.err.println("time for decoding "+elapsed + " ms per sentence");
         writer.flush();
         writer.close();

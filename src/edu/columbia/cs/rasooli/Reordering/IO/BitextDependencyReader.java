@@ -107,7 +107,6 @@ public class BitextDependencyReader {
     }
 
     public static BitextDependency readNextBitextDependency(BufferedReader depReader, BufferedReader intersectionReader, HashMap<String, String> universalMap, IndexMaps maps) throws IOException {
-        BitextDependency bitextDependency = null;
         String line1;
         while ((line1 = depReader.readLine()) != null) {
             if (line1.trim().length() == 0)
@@ -160,12 +159,10 @@ public class BitextDependencyReader {
             }
 
             BitextDependency bitext = new BitextDependency(alignedWords, tree);
-            if (bitext.getTrainableHeads().size() == 0)
-                continue;
-            else return bitext;
+            return bitext;
 
         }
-        return bitextDependency;
+        return null;
     }
 
     public static HashMap<String, int[]>[] constructMostCommonOrderings(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int topK) throws Exception {
