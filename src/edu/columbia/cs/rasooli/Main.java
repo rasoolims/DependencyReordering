@@ -33,9 +33,9 @@ public class Main {
                     Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
                             options.devTreePath, options.devIntersectionPath, options.universalPOSPath,options.trainTreePath+".train",options.devTreePath+".dev",7,options.topK,324);
                   if(options.classifierType== ClassifierType.perceptron)
-                      trainer.trainWithPerceptron(options.maxIter,options.modelPath,options.numOfThreads);
+                      trainer.trainWithPerceptron(options.maxIter, options.modelPath);
                   else if(options.classifierType== ClassifierType.pegasos)
-                    trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda, options.numOfThreads);
+                      trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda);
                 }
                 else if(options.decode || options.decodeWithAlignment){
                     Info info = new Info(options.modelPath, options.tunedIterations);
@@ -62,7 +62,7 @@ public class Main {
                 
                 Trainer trainer = new Trainer(p1, p2, p4, p5, p3, p1 + ".train", p4 + ".dev", 7, 20, 324);
 
-                trainer.trainWithPegasos(3, p6, 0.01f, 4);
+                trainer.trainWithPegasos(3, p6, 0.01f);
 
                 int[] tuned = {3, 3, 3, 3, 3, 3, 3};
                 Info info = new Info(p6, tuned);
@@ -83,7 +83,7 @@ public class Main {
             System.err.println("\nperceptron ");
 
             Trainer trainer = new Trainer(p1, p2, p4, p5, p3, p1 + ".train", p4 + ".dev", 7, 20, 324);
-            trainer.trainWithPerceptron(3,p6,4);
+            trainer.trainWithPerceptron(3, p6);
 
             int[] tuned = {3, 3, 3, 3, 3, 3, 3};
             Info info = new Info(p6, tuned);

@@ -1,6 +1,5 @@
 package edu.columbia.cs.rasooli.Reordering;
 
-import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
 
 import java.io.File;

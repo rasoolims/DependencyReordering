@@ -48,7 +48,7 @@ public class Trainer {
         mostCommonPermutations = BitextDependencyReader.constructMostCommonOrderings(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
     }
 
-    public void trainWithPerceptron(int maxIter, String modelPath, int numOfThreads) throws Exception {
+    public void trainWithPerceptron(int maxIter, String modelPath) throws Exception {
         System.err.println("Training started...");
         classifier = new AveragedPerceptron[maxLen];
         for (int i = 0; i < maxLen; i++)
@@ -174,7 +174,7 @@ public class Trainer {
         }
     }
 
-    public void trainWithPegasos(int maxIter, String modelPath, double lambda, int numOfThreads) throws Exception {
+    public void trainWithPegasos(int maxIter, String modelPath, double lambda) throws Exception {
         System.err.println("Training started...");
         classifier = new OnlinePegasos[maxLen];
         for (int i = 0; i < maxLen; i++)
