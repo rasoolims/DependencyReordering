@@ -1,7 +1,6 @@
 package edu.columbia.cs.rasooli;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
-import edu.columbia.cs.rasooli.Reordering.Classifier.OnlinePegasos;
 import edu.columbia.cs.rasooli.Reordering.Decoding.Reorderer;
 import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
 import edu.columbia.cs.rasooli.Reordering.Options;
@@ -57,6 +56,7 @@ public class Main {
         } else {
             System.out.println(Options.showHelp());
             double lambda=1f;
+           /*
             for (int t = 0; t < 5; t++) {
                 System.err.println("\nlambda " + lambda);
                 
@@ -80,6 +80,7 @@ public class Main {
                 reorderer.decodeWithAlignmentGuide(p4, p5, p5 + ".out");
                 lambda/=10;
             }
+            */
             System.err.println("\nperceptron ");
 
             Trainer trainer = new Trainer(p1, p2, p4, p5, p3, p1 + ".train", p4 + ".dev", 7, 20, 324);
@@ -94,7 +95,7 @@ public class Main {
             }
 
             Reorderer reorderer = new Reorderer(
-                    classifier, info.getMostCommonPermutations(), info.getUniversalPosMap(), info.getTopK(), 4, info.getMaps()
+                    classifier, info.getMostCommonPermutations(), info.getUniversalPosMap(), info.getTopK(), 1, info.getMaps()
             );
             reorderer.decode(p4, p4 + ".out");
             reorderer.decodeWithAlignmentGuide(p4, p5, p5 + ".out");

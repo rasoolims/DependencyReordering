@@ -1,6 +1,5 @@
 package edu.columbia.cs.rasooli.Reordering.Decoding;
 
-import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
@@ -52,24 +51,27 @@ public class Reorderer {
         ArrayList<ContextInstance> reorderingInstances=new ArrayList<ContextInstance>();
         
         for(int head:heads) {
-            HashSet<Integer> deps = tree.getDependents(head);
+            HashSet<Integer> dx = tree.getDependents(head);
+            HashSet<Integer> deps = new HashSet<Integer>(dx);
+            deps.add(head);
+
             TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
-            origOrderSet.add(head);
+            // origOrderSet.add(head);
             for (int dep : deps)
                 origOrderSet.add(dep);
 
-            int[] origOrder = new int[1 + deps.size()];
+            int[] origOrder = new int[1 + dx.size()];
             int i = 0;
             for (int dep : origOrderSet)
                 origOrder[i++] = dep;
 
             ContextInstance origContext = new ContextInstance(head, origOrder, tree);
-            ArrayList<Object>[]  features=  origContext.extractMainFeatures();
+            ArrayList<Object>[] features = origContext.extractMainFeatures();
             double bestScore = Double.NEGATIVE_INFINITY;
-            int[] bestOrder=null;
-            
-            int index= deps.size()-1;
-            if (index<mostCommonPermutations.length) {
+            int[] bestOrder = null;
+
+            int index = dx.size() - 1;
+            if (index < mostCommonPermutations.length) {
                 int l = 0;
                 double[] scores = classifier[index].scores(features, true);
 
@@ -83,18 +85,18 @@ public class Reorderer {
                 }
             }
 
-            
-                int[] newOrder = new int[origOrder.length];
-            if(bestOrder!=null)
+
+            int[] newOrder = new int[origOrder.length];
+            if (bestOrder != null)
                 for (int o = 0; o < newOrder.length; o++)
                     newOrder[o] = origOrder[bestOrder[o]];
             else
-                newOrder=origOrder;
-            
-           // for(int b=0;b<bestOrder.length;b++)
-             //   System.out.print(bestOrder[b]+" ");
+                newOrder = origOrder;
+
+            // for(int b=0;b<bestOrder.length;b++)
+            //   System.out.print(bestOrder[b]+" ");
             //System.out.print("\n---b----\n");
-            ContextInstance bestCandidate=new ContextInstance(head,newOrder,tree);
+            ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
 
             reorderingInstances.add(bestCandidate);
         }
@@ -119,9 +121,11 @@ public class Reorderer {
 
         for(int head:heads) {
             if(bitextDependency.getTrainableHeads().contains(head)){
-                HashSet<Integer> deps = bitextDependency.getSourceTree().getDependents(head);
+                HashSet<Integer> dx = bitextDependency.getSourceTree().getDependents(head);
+                HashSet<Integer> deps = new HashSet<Integer>(dx);
+                deps.add(head);
                 TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
-                origOrderSet.add(head);
+                // origOrderSet.add(head);
                 for (int dep : deps)
                     origOrderSet.add(dep);
                 
@@ -129,7 +133,7 @@ public class Reorderer {
                 int[] ordering = new int[origOrderSet.size()];
                 HashMap<Integer, Integer> revOrdering = new HashMap<Integer, Integer>();
                 revOrdering.put(head, index);
-                ordering[index++] = head;
+                // ordering[index++] = head;
                 for (int d : deps) {
                     revOrdering.put(d, index);
                     ordering[index++] = d;
@@ -142,7 +146,7 @@ public class Reorderer {
                     for (int dep : origOrderSet)
                         changedOrder.put(alignedSet[dep].first(), dep);
 
-                    int[] goldOrder = new int[1 + deps.size()];
+                    int[] goldOrder = new int[1 + dx.size()];
                     int i = 0;
                     for (int dep : changedOrder.keySet()) {
                         goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
@@ -163,13 +167,16 @@ public class Reorderer {
                     System.out.print("err!...");
                 }
             }   else {
-                HashSet<Integer> deps = tree.getDependents(head);
+                HashSet<Integer> dx = tree.getDependents(head);
+                HashSet<Integer> deps = new HashSet<Integer>(dx);
+                deps.add(head);
+
                 TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
-                origOrderSet.add(head);
+                //  origOrderSet.add(head);
                 for (int dep : deps)
                     origOrderSet.add(dep);
 
-                int[] origOrder = new int[1 + deps.size()];
+                int[] origOrder = new int[1 + dx.size()];
                 int i = 0;
                 for (int dep : origOrderSet)
                     origOrder[i++] = dep;
@@ -179,7 +186,7 @@ public class Reorderer {
                 double bestScore = Double.NEGATIVE_INFINITY;
                 int[] bestOrder = null;
 
-                int index = deps.size() - 1;
+                int index = dx.size() - 1;
                 if (index < mostCommonPermutations.length) {
                     int l = 0;
                     double[] scores = classifier[index].scores(features, true);

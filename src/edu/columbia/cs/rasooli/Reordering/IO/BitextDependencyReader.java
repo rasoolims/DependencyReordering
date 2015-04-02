@@ -3,9 +3,10 @@ package edu.columbia.cs.rasooli.Reordering.IO;
 import edu.columbia.cs.rasooli.Reordering.Structures.*;
 import edu.columbia.cs.rasooli.Reordering.Training.TrainData;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -14,7 +15,6 @@ import java.util.zip.GZIPOutputStream;
  * Time: 12:21 AM
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
-
 public class BitextDependencyReader {
     public static HashMap<String, String> createUniversalMap(String universalPosPath) throws Exception {
         HashMap<String, String> universalMap = new HashMap<String, String>();
@@ -230,17 +230,20 @@ public class BitextDependencyReader {
             BitextDependency bitextDependency = new BitextDependency(alignedWords, tree);
             if (bitextDependency.getTrainableHeads().size() > 0) {
                 for (int head : bitextDependency.getTrainableHeads()) {
-                    HashSet<Integer> deps = bitextDependency.getSourceTree().getDependents(head);
+                    HashSet<Integer> dx = bitextDependency.getSourceTree().getDependents(head);
+                    HashSet<Integer> deps = new HashSet(dx);
+                    deps.add(head);
+
                     TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
-                    origOrderSet.add(head);
+                    // origOrderSet.add(head);
                     for (int dep : deps)
                         origOrderSet.add(dep);
 
                     int index = 0;
                     int[] ordering = new int[origOrderSet.size()];
                     HashMap<Integer, Integer> revOrdering = new HashMap<Integer, Integer>();
-                    revOrdering.put(head, index);
-                    ordering[index++] = head;
+                    //revOrdering.put(head, index);
+                    //  ordering[index++] = head;
                     for (int d : deps) {
                         revOrdering.put(d, index);
                             ordering[index++] = d;
@@ -249,11 +252,11 @@ public class BitextDependencyReader {
                     TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
 
                     SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
-                    changedOrder.put(alignedSet[head].first(), head);
+                    // changedOrder.put(alignedSet[head].first(), head);
                     for (int dep : origOrderSet)
                         changedOrder.put(alignedSet[dep].first(), dep);
 
-                    int[] goldOrder = new int[1 + deps.size()];
+                    int[] goldOrder = new int[deps.size()];
                     StringBuilder goldOrderStr = new StringBuilder();
                     int i = 0;
                     for (int dep : changedOrder.keySet()) {
@@ -261,7 +264,7 @@ public class BitextDependencyReader {
                         goldOrderStr.append(revOrdering.get(changedOrder.get(dep)) + "-");
                     }
 
-                    if (deps.size() <= maxLength) {
+                    if (dx.size() <= maxLength) {
                         String orderStr = goldOrderStr.toString();
                         if (!posOrderMap[goldOrder.length - 2].containsKey(orderStr))
                             posOrderMap[goldOrder.length - 2].put(orderStr, new Pair<Integer, int[]>(1, goldOrder));
