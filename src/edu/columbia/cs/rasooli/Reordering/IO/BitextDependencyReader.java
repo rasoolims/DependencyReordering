@@ -410,4 +410,192 @@ public class BitextDependencyReader {
         return trainData;
     }
 
+
+    public static Pair<HashMap<String, int[]>[],HashMap<String, int[]>[]> constructMostCommonLeftRightOrderings(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int topK) throws Exception{
+        HashMap<String, int[]>[] leftOrdering=new HashMap[maxLength];
+        HashMap<String, int[]>[] rightOrdering=new HashMap[maxLength];
+        for(int i=0;i<maxLength;i++){
+            leftOrdering[i]=new HashMap<String, int[]>();
+            rightOrdering[i]=new HashMap<String, int[]>();
+        }
+
+
+        HashMap<String, Pair<Integer, int[]>>[] leftOrderMap = new HashMap[maxLength];
+        HashMap<String, Pair<Integer, int[]>>[] rightOrderMap = new HashMap[maxLength];
+        for (int i = 0; i < leftOrderMap.length; i++) {
+            leftOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
+            rightOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
+        }
+
+        BufferedReader depReader = new BufferedReader(new FileReader(parsedFilePath));
+        BufferedReader intersectionReader = new BufferedReader(new FileReader(alignIntersectionPath));
+
+        String line1;
+        int count = 0;
+        while ((line1 = depReader.readLine()) != null) {
+            if (line1.trim().length() == 0)
+                continue;
+            String[] w = line1.trim().split("\t");
+            String[] t = depReader.readLine().trim().split("\t");
+            String[] l = depReader.readLine().trim().split("\t");
+            String[] h = depReader.readLine().trim().split("\t");
+
+            assert w.length == t.length && t.length == l.length && h.length == l.length;
+
+            String[] words = new String[w.length + 1];
+            words[0] = "ROOT";
+            for (int i = 0; i < w.length; i++)
+                words[i + 1] = w[i];
+
+            String[] tags = new String[t.length + 1];
+            tags[0] = "ROOT";
+            for (int i = 0; i < t.length; i++)
+                tags[i + 1] = t[i];
+
+            String[] labels = new String[l.length + 1];
+            labels[0] = "";
+            for (int i = 0; i < l.length; i++)
+                labels[i + 1] = l[i];
+
+            int[] heads = new int[h.length + 1];
+            heads[0] = -1;
+            for (int i = 0; i < h.length; i++)
+                heads[i + 1] = Integer.parseInt(h[i]);
+
+            Word[] wordStructs = new Word[words.length];
+            for (int i = 0; i < words.length; i++) {
+                wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]), maps);
+            }
+
+
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+
+            String[] split = intersectionReader.readLine().trim().split(" ");
+            SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
+            for (int i = 0; i < alignedWords.length; i++)
+                alignedWords[i] = new TreeSet<Integer>();
+
+            for (String s : split) {
+                String[] inds = s.split("-");
+                int d1 = Integer.parseInt(inds[0]);
+                assert d1 < words.length;
+                alignedWords[d1].add(Integer.parseInt(inds[1]));
+            }
+
+            BitextDependency bitextDependency = new BitextDependency(alignedWords, tree);
+            if (bitextDependency.getTrainableHeads().size() > 0) {
+                for (int head : bitextDependency.getTrainableHeads()) {
+                    HashSet<Integer> dx = bitextDependency.getSourceTree().getDependents(head);
+                    HashSet<Integer> deps = new HashSet(dx);
+                    deps.add(head);
+
+                    TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+                    // origOrderSet.add(head);
+                    for (int dep : deps)
+                        origOrderSet.add(dep);
+
+                    TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+
+                    SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
+                    // changedOrder.put(alignedSet[head].first(), head);
+                    for (int dep : origOrderSet)
+                        changedOrder.put(alignedSet[dep].first(), dep);
+
+                    ArrayList<Integer> goldLeftOrder=new ArrayList<Integer>();
+                    ArrayList<Integer> goldRightOrder=new ArrayList<Integer>();
+                    TreeMap<Integer,Integer> leftRevMap=new TreeMap<Integer, Integer>();
+                    TreeMap<Integer,Integer> rightRevMap=new TreeMap<Integer, Integer>();
+
+                   int index=0;
+
+                    boolean left=true;
+                    for (int dep : changedOrder.keySet()) {
+                        if(changedOrder.get(dep)==head) {
+                            index=0;
+                            left=false;
+                        } else if(left){
+                            goldLeftOrder.add(changedOrder.get(dep));
+                            leftRevMap.put(changedOrder.get(dep),index++);
+                        } else{
+                            goldRightOrder.add(changedOrder.get(dep));
+                            rightRevMap.put(changedOrder.get(dep),index++);
+                        }
+                    }
+
+                    int[] goldLeftOrderArray=new int[goldLeftOrder.size()];
+                    int[] goldRightOrderArray=new int[goldRightOrder.size()];
+                    StringBuilder goldLeftStr=new StringBuilder();
+                    StringBuilder goldRightStr=new StringBuilder();
+
+
+                    int i = 0;
+                    for (int dep : leftRevMap.keySet()) {
+                        goldLeftOrderArray[i++] = leftRevMap.get(dep);
+                        goldLeftStr.append(leftRevMap.get(dep) + "-");
+                    }
+
+                    i = 0;
+                    for (int dep : rightRevMap.keySet()) {
+                        goldRightOrderArray[i++] = rightRevMap.get(dep);
+                        goldRightStr.append(rightRevMap.get(dep) + "-");
+                    }
+                    
+                    if(goldLeftOrder.size()<maxLength && goldLeftOrder.size()>0) {
+                        int ind=goldLeftOrder.size()-1;
+                        String orderStr=goldLeftStr.toString();
+                        if(!leftOrderMap[ind].containsKey(orderStr))
+                            leftOrderMap[ind].put(orderStr,new Pair<Integer, int[]>(1,goldLeftOrderArray));
+                        else{
+                            leftOrderMap[ind].get(orderStr).first++;
+                        }
+                    }
+
+                    if(goldRightOrder.size()<maxLength && goldRightOrder.size()>0){
+                        int ind=goldRightOrder.size()-1;
+                        String orderStr=goldRightStr.toString();
+                        if(!rightOrderMap[ind].containsKey(orderStr))
+                            rightOrderMap[ind].put(orderStr,new Pair<Integer, int[]>(1,goldRightOrderArray));
+                        else{
+                            rightOrderMap[ind].get(orderStr).first++;
+                        }
+                    }
+                }
+            }
+            count++;
+            if (count % 1000000 == 0)
+                System.err.print(count + "...");
+        }
+
+        for (int i = 0; i < maxLength; i++) {
+            TreeSet<LabelOrderFrequency> labelOrderFrequencies = new TreeSet<LabelOrderFrequency>();
+            for (String orderStr : leftOrderMap[i].keySet()) {
+                Pair<Integer, int[]> pair = leftOrderMap[i].get(orderStr);
+                labelOrderFrequencies.add(new LabelOrderFrequency(orderStr, pair.second, pair.first));
+                if (labelOrderFrequencies.size() > topK)
+                    labelOrderFrequencies.pollFirst();
+            }
+
+            for (LabelOrderFrequency labelOrderFrequency : labelOrderFrequencies) {
+                leftOrdering[i].put(labelOrderFrequency.getLabel(), labelOrderFrequency.getOrder());
+            }
+
+            labelOrderFrequencies = new TreeSet<LabelOrderFrequency>();
+            for (String orderStr : rightOrderMap[i].keySet()) {
+                Pair<Integer, int[]> pair = rightOrderMap[i].get(orderStr);
+                labelOrderFrequencies.add(new LabelOrderFrequency(orderStr, pair.second, pair.first));
+                if (labelOrderFrequencies.size() > topK)
+                    labelOrderFrequencies.pollFirst();
+            }
+
+            for (LabelOrderFrequency labelOrderFrequency : labelOrderFrequencies) {
+                rightOrdering[i].put(labelOrderFrequency.getLabel(), labelOrderFrequency.getOrder());
+            }
+
+        }
+        System.err.print(count + "\n");
+        
+        
+        return  new Pair<HashMap<String, int[]>[], HashMap<String, int[]>[]>(leftOrdering,rightOrdering);
+
+    }
 }

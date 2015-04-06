@@ -46,6 +46,7 @@ public class Trainer {
         universalMap = BitextDependencyReader.createUniversalMap(universalPOSPath);
         maps = DependencyReader.readIndexMap(trainTreePath, universalMap);
         mostCommonPermutations = BitextDependencyReader.constructMostCommonOrderings(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
+         BitextDependencyReader.constructMostCommonLeftRightOrderings(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen, topK);
     }
 
     public void trainWithPerceptron(int maxIter, String modelPath) throws Exception {
