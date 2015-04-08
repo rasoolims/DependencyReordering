@@ -204,11 +204,13 @@ public class Trainer {
         }
 
         //todo
+        System.err.println("Loading training data...");
         Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> dataPairs = BitextDependencyReader.getLeftRightTrainData(trainTreePath, trainIntersectionPath, universalMap, maps, maxLen);
         System.err.println("number of pivot instances:" + dataPairs.first.size());
 
         Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> devDataPairs = null;
         if (devTreePath != "") {
+            System.err.println("Loading dev data...");
             devDataPairs = BitextDependencyReader.getLeftRightTrainData(devTreePath, devIntersectionPath, universalMap, maps, maxLen);
             System.err.println("number of dev pivot instances:" + devDataPairs.first.size());
         }
