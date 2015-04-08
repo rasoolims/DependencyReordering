@@ -195,10 +195,10 @@ public class Trainer {
 
     public void trainWithTwoClassifiers(int maxIter, String modelPath) throws Exception {
         System.err.println("Training started...");
-        leftClassifier = new AveragedPerceptron[maxLen];
-        rightClassifier = new AveragedPerceptron[maxLen];
+        leftClassifier = new AveragedPerceptron[maxLen-1];
+        rightClassifier = new AveragedPerceptron[maxLen-1];
         pivotClassifer = new AveragedPerceptron(1, pivotFeatLen);
-        for (int i = 0; i < maxLen; i++) {
+        for (int i = 0; i < maxLen-1; i++) {
             leftClassifier[i] = new AveragedPerceptron(topK, featLen);
             rightClassifier[i] = new AveragedPerceptron(topK, featLen);
         }

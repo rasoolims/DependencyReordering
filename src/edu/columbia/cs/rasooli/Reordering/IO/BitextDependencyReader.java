@@ -413,16 +413,16 @@ public class BitextDependencyReader {
 
 
     public static Pair<HashMap<String, int[]>[],HashMap<String, int[]>[]> constructMostCommonLeftRightOrderings(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int topK) throws Exception{
-        HashMap<String, int[]>[] leftOrdering=new HashMap[maxLength];
-        HashMap<String, int[]>[] rightOrdering=new HashMap[maxLength];
-        for(int i=0;i<maxLength;i++){
+        HashMap<String, int[]>[] leftOrdering=new HashMap[maxLength-1];
+        HashMap<String, int[]>[] rightOrdering=new HashMap[maxLength-1];
+        for(int i=0;i<maxLength-1;i++){
             leftOrdering[i]=new HashMap<String, int[]>();
             rightOrdering[i]=new HashMap<String, int[]>();
         }
 
 
-        HashMap<String, Pair<Integer, int[]>>[] leftOrderMap = new HashMap[maxLength];
-        HashMap<String, Pair<Integer, int[]>>[] rightOrderMap = new HashMap[maxLength];
+        HashMap<String, Pair<Integer, int[]>>[] leftOrderMap = new HashMap[maxLength-1];
+        HashMap<String, Pair<Integer, int[]>>[] rightOrderMap = new HashMap[maxLength-1];
         for (int i = 0; i < leftOrderMap.length; i++) {
             leftOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
             rightOrderMap[i] = new HashMap<String, Pair<Integer, int[]>>();
@@ -542,8 +542,8 @@ public class BitextDependencyReader {
                         goldRightStr.append(rightRevMap.get(dep) + "-");
                     }
                     
-                    if(goldLeftOrder.size()<maxLength && goldLeftOrder.size()>0) {
-                        int ind=goldLeftOrder.size()-1;
+                    if(goldLeftOrder.size()<maxLength && goldLeftOrder.size()>1) {
+                        int ind=goldLeftOrder.size()-2;
                         String orderStr=goldLeftStr.toString();
                         if(!leftOrderMap[ind].containsKey(orderStr))
                             leftOrderMap[ind].put(orderStr,new Pair<Integer, int[]>(1,goldLeftOrderArray));
@@ -552,8 +552,8 @@ public class BitextDependencyReader {
                         }
                     }
 
-                    if(goldRightOrder.size()<maxLength && goldRightOrder.size()>0){
-                        int ind=goldRightOrder.size()-1;
+                    if(goldRightOrder.size()<maxLength && goldRightOrder.size()>1){
+                        int ind=goldRightOrder.size()-2;
                         String orderStr=goldRightStr.toString();
                         if(!rightOrderMap[ind].containsKey(orderStr))
                             rightOrderMap[ind].put(orderStr,new Pair<Integer, int[]>(1,goldRightOrderArray));
@@ -568,7 +568,7 @@ public class BitextDependencyReader {
                 System.err.print(count + "...");
         }
 
-        for (int i = 0; i < maxLength; i++) {
+        for (int i = 0; i < maxLength-1; i++) {
             TreeSet<LabelOrderFrequency> labelOrderFrequencies = new TreeSet<LabelOrderFrequency>();
             for (String orderStr : leftOrderMap[i].keySet()) {
                 Pair<Integer, int[]> pair = leftOrderMap[i].get(orderStr);
@@ -731,10 +731,10 @@ public class BitextDependencyReader {
                     for (int ch : unorderedRightChildren)
                         rightChildren[i++] = ch;
 
-                    if (leftChildren.length <= maxLength && leftChildren.length > 0)
-                        leftTrainData.add(new TrainData(goldLeftOrderArray.length - 1, goldLeftStr.toString(), tree.extractMainFeatures(head, leftChildren)));
-                    if (rightChildren.length <= maxLength && rightChildren.length > 0)
-                        rightTrainData.add(new TrainData(goldRightOrderArray.length - 1, goldRightStr.toString(), tree.extractMainFeatures(head, rightChildren)));
+                    if (leftChildren.length <= maxLength && leftChildren.length > 1)
+                        leftTrainData.add(new TrainData(goldLeftOrderArray.length - 2, goldLeftStr.toString(), tree.extractMainFeatures(head, leftChildren)));
+                    if (rightChildren.length <= maxLength && rightChildren.length > 1)
+                        rightTrainData.add(new TrainData(goldRightOrderArray.length - 2, goldRightStr.toString(), tree.extractMainFeatures(head, rightChildren)));
 
                     for (int dep : dx) {
                         boolean before = true;
@@ -743,7 +743,6 @@ public class BitextDependencyReader {
                         pivotTrainData.add(new PivotTrainData(before, tree.extractPivotFeatures(head, dep)));
                     }
                     instance++;
-                   
                 }
                 
                 
@@ -752,7 +751,6 @@ public class BitextDependencyReader {
             if(instance>=maxInstance)
                 break;
         }
-        System.err.print(count + "\n");
         if (instance==0)
             return null;
         
