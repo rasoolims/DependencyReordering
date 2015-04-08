@@ -15,6 +15,8 @@ public interface Classifier {
     public void incrementIteration() ;
     public int getIteration();
     public double[] scores(ArrayList<Object>[] features, boolean decode);
+
+    public int argmax(ArrayList<Object>[] features, boolean decode);
     public double[] scores(ArrayList<Object>[] features);
     public void updateWeight(int label, int slot, Object feature, double change) throws Exception;
     public ClassifierType getType();

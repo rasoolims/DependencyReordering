@@ -78,6 +78,21 @@ public class OnlinePegasos implements Classifier {
    }
 
     @Override
+    public int argmax(ArrayList<Object>[] features, boolean decode) {
+        int bestLabel = -1;
+        double[] scores = scores(features, decode);
+        double bestValue = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < scores.length; i++) {
+            if (scores[i] >= bestValue) {
+                bestValue = scores[i];
+                bestLabel = i;
+            }
+        }
+        return bestLabel;
+    }
+
+    @Override
     public double[] scores(ArrayList<Object>[] features) {
         double scores[] = new double[labelSize];
         for (int i = 0; i < featSize; i++) {

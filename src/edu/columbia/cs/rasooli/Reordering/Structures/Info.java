@@ -19,6 +19,7 @@ import java.util.zip.GZIPOutputStream;
  */
 
 public class Info {
+    public boolean twoClassifer;
     HashMap<Object, CompactArray>[][] finalWeights;
     HashMap<Object, CompactArray>[][] finalLeftWeights;
     HashMap<Object, CompactArray>[][] finalRightWeights;
@@ -30,7 +31,6 @@ public class Info {
     HashMap<String, int[]>[] mostLeftCommonPermutations;
     HashMap<String, int[]>[] mostRightCommonPermutations;
     IndexMaps maps;
-    boolean twoClassifer;
     
     public Info(Classifier[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalPosMap, int topK,IndexMaps maps) throws Exception {
         twoClassifer = false;
@@ -148,7 +148,7 @@ public class Info {
         maps = (IndexMaps) reader.readObject();
         featLen = reader.readInt();
 
-        if (twoClassifer) {
+        if (!twoClassifer) {
             finalWeights = new HashMap[tunedIterations.length][];
             for (int i = 0; i < tunedIterations.length; i++) {
                 int iter = tunedIterations[i];
@@ -178,7 +178,7 @@ public class Info {
                 gz = new GZIPInputStream(fos);
 
                 reader = new ObjectInputStream(gz);
-                finalLeftWeights[i] = (HashMap<Object, CompactArray>[]) reader.readObject();
+                finalLeftWeights[i - 1] = (HashMap<Object, CompactArray>[]) reader.readObject();
             }
 
             finalRightWeights = new HashMap[arrLen][];
@@ -189,7 +189,7 @@ public class Info {
                 gz = new GZIPInputStream(fos);
 
                 reader = new ObjectInputStream(gz);
-                finalRightWeights[i] = (HashMap<Object, CompactArray>[]) reader.readObject();
+                finalRightWeights[i - (arrLen + 1)] = (HashMap<Object, CompactArray>[]) reader.readObject();
             }
         }
 
@@ -285,5 +285,25 @@ public class Info {
 
     public int getFeatLen() {
         return featLen;
+    }
+
+    public HashMap<Object, CompactArray>[][] getFinalLeftWeights() {
+        return finalLeftWeights;
+    }
+
+    public HashMap<String, int[]>[] getMostRightCommonPermutations() {
+        return mostRightCommonPermutations;
+    }
+
+    public HashMap<String, int[]>[] getMostLeftCommonPermutations() {
+        return mostLeftCommonPermutations;
+    }
+
+    public HashMap<Object, CompactArray>[] getPivotWeights() {
+        return pivotWeights;
+    }
+
+    public HashMap<Object, CompactArray>[][] getFinalRightWeights() {
+        return finalRightWeights;
     }
 }

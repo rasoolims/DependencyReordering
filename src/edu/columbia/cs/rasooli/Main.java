@@ -45,18 +45,46 @@ public class Main {
                 }
                 else if(options.decode || options.decodeWithAlignment){
                     Info info = new Info(options.modelPath, options.tunedIterations);
-                    AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];
-                    for(int i=0;i<classifier.length;i++) {
-                        classifier[i]=new AveragedPerceptron(info.getTopK(), info.getFeatLen());
-                        classifier[i].setAvgWeights(info.getFinalWeights()[i]);
+                    if (info.twoClassifer) {
+                        AveragedPerceptron[] leftClassifier = new AveragedPerceptron[info.getFinalLeftWeights().length];
+                        for (int i = 0; i < leftClassifier.length; i++) {
+                            leftClassifier[i] = new AveragedPerceptron(info.getTopK(), info.getFeatLen());
+                            leftClassifier[i].setAvgWeights(info.getFinalLeftWeights()[i]);
+                        }
+
+                        AveragedPerceptron[] rightClassifier = new AveragedPerceptron[info.getFinalRightWeights().length];
+                        for (int i = 0; i < rightClassifier.length; i++) {
+                            rightClassifier[i] = new AveragedPerceptron(info.getTopK(), info.getFeatLen());
+                            rightClassifier[i].setAvgWeights(info.getFinalRightWeights()[i]);
+                        }
+
+                        AveragedPerceptron pivotClassifer = new AveragedPerceptron(1, info.getPivotWeights().length);
+                        pivotClassifer.setAvgWeights(info.getPivotWeights());
+
+
+                        Reorderer reorderer = new Reorderer(
+                                leftClassifier, rightClassifier, pivotClassifer, info.getMostLeftCommonPermutations(), info.getMostRightCommonPermutations(),
+                                info.getUniversalPosMap(), info.getTopK(), options.numOfThreads, info.getMaps()
+                        );
+                        if (options.decode)
+                            reorderer.decode(options.inputFile, options.outputFile);
+                        else if (options.decodeWithAlignment)
+                            reorderer.decodeWithAlignmentGuide(options.inputFile, options.inputIntersectionFile, options.outputFile);
+
+                    } else {
+                        AveragedPerceptron[] classifier = new AveragedPerceptron[info.getFinalWeights().length];
+                        for (int i = 0; i < classifier.length; i++) {
+                            classifier[i] = new AveragedPerceptron(info.getTopK(), info.getFeatLen());
+                            classifier[i].setAvgWeights(info.getFinalWeights()[i]);
+                        }
+                        Reorderer reorderer = new Reorderer(
+                                classifier, info.getMostCommonPermutations(), info.getUniversalPosMap(), info.getTopK(), options.numOfThreads, info.getMaps()
+                        );
+                        if (options.decode)
+                            reorderer.decode(options.inputFile, options.outputFile);
+                        else if (options.decodeWithAlignment)
+                            reorderer.decodeWithAlignmentGuide(options.inputFile, options.inputIntersectionFile, options.outputFile);
                     }
-                    Reorderer reorderer=new Reorderer(
-                            classifier,info.getMostCommonPermutations(),info.getUniversalPosMap(),info.getTopK(),options.numOfThreads ,info.getMaps()
-                    );
-                    if(options.decode)
-                    reorderer.decode(options.inputFile,options.outputFile);
-                    else if(options.decodeWithAlignment)
-                        reorderer.decodeWithAlignmentGuide(options.inputFile,options.inputIntersectionFile,options.outputFile);
                 }
             } else
                 System.out.println(Options.showHelp());
@@ -67,21 +95,30 @@ public class Main {
             Trainer trainer = new Trainer(p1, p2, p4, p5, p3, 5, 20, 324, 189);
             trainer.trainWithPerceptron(3, p6, true);
 
-            /*
-            int[] tuned = {3, 3, 3, 3, 3, 3, 3};
+            int[] tuned = {3, 3, 3, 3, 3, 3, 3, 3, 3};
             Info info = new Info(p6, tuned);
-            AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];
-            for(int i=0;i<classifier.length;i++) {
-             classifier[i]=new AveragedPerceptron(info.getTopK(), info.getFeatLen());
-                classifier[i].setAvgWeights(info.getFinalWeights()[i]);
+            AveragedPerceptron[] leftClassifier = new AveragedPerceptron[info.getFinalLeftWeights().length];
+            for (int i = 0; i < leftClassifier.length; i++) {
+                leftClassifier[i] = new AveragedPerceptron(info.getTopK(), info.getFeatLen());
+                leftClassifier[i].setAvgWeights(info.getFinalLeftWeights()[i]);
             }
 
+            AveragedPerceptron[] rightClassifier = new AveragedPerceptron[info.getFinalRightWeights().length];
+            for (int i = 0; i < rightClassifier.length; i++) {
+                rightClassifier[i] = new AveragedPerceptron(info.getTopK(), info.getFeatLen());
+                rightClassifier[i].setAvgWeights(info.getFinalRightWeights()[i]);
+            }
+
+            AveragedPerceptron pivotClassifer = new AveragedPerceptron(1, info.getPivotWeights().length);
+            pivotClassifer.setAvgWeights(info.getPivotWeights());
+
+
             Reorderer reorderer = new Reorderer(
-                    classifier, info.getMostCommonPermutations(), info.getUniversalPosMap(), info.getTopK(), 1, info.getMaps()
+                    leftClassifier, rightClassifier, pivotClassifer, info.getMostLeftCommonPermutations(), info.getMostRightCommonPermutations(),
+                    info.getUniversalPosMap(), info.getTopK(), 1, info.getMaps()
             );
             reorderer.decode(p4, p4 + ".out");
             reorderer.decodeWithAlignmentGuide(p4, p5, p5 + ".out");
-            */
         }
 
     }

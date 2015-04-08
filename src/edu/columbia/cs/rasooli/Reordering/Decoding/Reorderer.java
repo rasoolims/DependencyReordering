@@ -25,15 +25,24 @@ import java.util.concurrent.Executors;
 
 public class Reorderer {
     Classifier[] classifier;
+    Classifier[] leftClassifier;
+    Classifier[] rightClassifier;
+    Classifier pivotClassifier;
     HashMap<String,int[]>[]  mostCommonPermutations;
+    HashMap<String, int[]>[] leftMostCommonPermutations;
+    HashMap<String, int[]>[] rightMostCommonPermutations;
     int topK;
     HashMap<String,String> universalMap;
+    boolean twoClassifier = true;
+    int maxLen = 5;
     
     IndexMaps maps;
     int numOfThreads;
     
     
     public Reorderer(Classifier[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalMap, int topK, int numOfThreads, IndexMaps maps) {
+        twoClassifier = false;
+        maxLen = classifier.length + 1;
         this.classifier = classifier;
         this.mostCommonPermutations = mostCommonPermutations;
         this.universalMap=universalMap;
@@ -42,7 +51,60 @@ public class Reorderer {
         this.maps=maps;
     }
 
+    public Reorderer(Classifier[] leftClassifier, Classifier[] rightClassifier, Classifier pivotClassifier, HashMap<String, int[]>[] leftMostCommonPermutations, HashMap<String, int[]>[] rightMostCommonPermutations, HashMap<String, String> universalMap, int topK, int numOfThreads, IndexMaps maps) throws Exception {
+        twoClassifier = true;
+        maxLen = leftClassifier.length + 1;
+        this.leftClassifier = leftClassifier;
+        this.rightClassifier = rightClassifier;
+        this.leftMostCommonPermutations = leftMostCommonPermutations;
+        this.rightMostCommonPermutations = rightMostCommonPermutations;
+
+        for (int i = 0; i < leftMostCommonPermutations.length; i++) {
+            if (leftMostCommonPermutations[i].size() == 0) {
+                StringBuilder str = new StringBuilder();
+                int[] ord = new int[i + 2];
+                for (int j = 0; j < i + 2; j++) {
+                    str.append(j + "-");
+                    ord[j] = j;
+                }
+                leftMostCommonPermutations[i].put(str.toString(), ord);
+            }
+        }
+
+        for (int i = 0; i < rightMostCommonPermutations.length; i++) {
+            if (rightMostCommonPermutations[i].size() == 0) {
+                StringBuilder str = new StringBuilder();
+                int[] ord = new int[i + 2];
+                for (int j = 0; j < i + 2; j++) {
+                    str.append(j + "-");
+                    ord[j] = j;
+                }
+                rightMostCommonPermutations[i].put(str.toString(), ord);
+            }
+        }
+
+        this.pivotClassifier = pivotClassifier;
+        this.universalMap = universalMap;
+        this.topK = topK;
+        this.numOfThreads = numOfThreads;
+        this.maps = maps;
+    }
+
     public DependencyTree reorder(DependencyTree tree) throws Exception {
+        if (twoClassifier)
+            return reorderWithTwoClassifier(tree);
+        else
+            return reorderWithOneClassifier(tree);
+    }
+
+    public DependencyTree reorderWithAlignmentGuide(BitextDependency bitextDependency) throws Exception {
+        if (twoClassifier)
+            return reorderWithAlignmentGuideWithTwoClassifier(bitextDependency);
+        else
+            return reorderWithAlignmentGuideWithOneClassifier(bitextDependency);
+    }
+
+    public DependencyTree reorderWithOneClassifier(DependencyTree tree) throws Exception {
         HashSet<Integer> heads=new HashSet<Integer>();
         for(int h=1;h<tree.size();h++)
             if(tree.hasDep(h))
@@ -109,7 +171,7 @@ public class Reorderer {
         return currentTree;
     }
 
-    public DependencyTree reorderWithAlignmentGuide(BitextDependency bitextDependency) throws Exception {
+    public DependencyTree reorderWithAlignmentGuideWithOneClassifier(BitextDependency bitextDependency) throws Exception {
      DependencyTree tree=bitextDependency.getSourceTree();
         
         HashSet<Integer> heads=new HashSet<Integer>();
@@ -206,6 +268,247 @@ public class Reorderer {
                         newOrder[o] = origOrder[bestOrder[o]];
                 else
                     newOrder = origOrder;
+                ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+
+                reorderingInstances.add(bestCandidate);
+            }
+        }
+
+        DependencyTree currentTree = tree;
+        for (ContextInstance instance : reorderingInstances) {
+            currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
+        }
+
+        return currentTree;
+    }
+
+    public DependencyTree reorderWithTwoClassifier(DependencyTree tree) throws Exception {
+        HashSet<Integer> heads = new HashSet<Integer>();
+        for (int h = 1; h < tree.size(); h++)
+            if (tree.hasDep(h))
+                heads.add(h);
+
+        ArrayList<ContextInstance> reorderingInstances = new ArrayList<ContextInstance>();
+
+        for (int head : heads) {
+            HashSet<Integer> deps = tree.getDependents(head);
+
+            ArrayList<Integer> left = new ArrayList<Integer>();
+            ArrayList<Integer> right = new ArrayList<Integer>();
+
+            for (int d : deps) {
+                ArrayList<Object>[] features = tree.extractPivotFeatures(head, d);
+                double score = pivotClassifier.scores(features, true)[0];
+                if (score >= 0)
+                    left.add(d);
+                else
+                    right.add(d);
+            }
+
+            int[] leftChildren = new int[left.size()];
+            int[] rightChildren = new int[right.size()];
+
+            int i = 0;
+            for (int d : left)
+                leftChildren[i++] = d;
+            i = 0;
+            for (int d : right)
+                rightChildren[i++] = d;
+
+            int[] newOrder = new int[deps.size() + 1];
+            i = 0;
+            if (leftChildren.length > 1 && leftChildren.length <= maxLen) {
+                ArrayList<Object>[] features = tree.extractMainFeatures(head, leftChildren);
+                int l = 0;
+                double bestScore = Double.NEGATIVE_INFINITY;
+                String bestLabel = "";
+                int index = leftChildren.length - 2;
+                double[] score = leftClassifier[index].scores(features, true);
+                for (String label : leftMostCommonPermutations[index].keySet()) {
+                    if (score[l] >= bestScore) {
+                        bestScore = score[l];
+                        bestLabel = label;
+                    }
+                    l++;
+                }
+
+                int[] order = leftMostCommonPermutations[index].get(bestLabel);
+                for (int j = 0; j < order.length; j++)
+                    newOrder[j] = leftChildren[order[j]];
+            } else {
+                for (int j = 0; j < leftChildren.length; j++)
+                    newOrder[j] = leftChildren[j];
+            }
+            newOrder[leftChildren.length] = head;
+
+            if (rightChildren.length > 1 && rightChildren.length <= maxLen) {
+                ArrayList<Object>[] features = tree.extractMainFeatures(head, rightChildren);
+                int l = 0;
+                double bestScore = Double.NEGATIVE_INFINITY;
+                String bestLabel = "";
+                int index = rightChildren.length - 2;
+                if (index >= rightClassifier.length)
+                    System.out.print("ERROR!");
+                double[] score = rightClassifier[index].scores(features, true);
+                for (String label : rightMostCommonPermutations[index].keySet()) {
+                    if (score[l] >= bestScore) {
+                        bestScore = score[l];
+                        bestLabel = label;
+                    }
+                    l++;
+                }
+                int[] order = rightMostCommonPermutations[index].get(bestLabel);
+
+                for (int j = 0; j < order.length; j++)
+                    newOrder[j + leftChildren.length + 1] = rightChildren[order[j]];
+            } else {
+
+                for (int j = 0; j < rightChildren.length; j++)
+                    newOrder[j + leftChildren.length + 1] = rightChildren[j];
+            }
+
+            ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+
+            reorderingInstances.add(bestCandidate);
+        }
+
+        DependencyTree currentTree = tree;
+        for (ContextInstance instance : reorderingInstances) {
+            currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
+        }
+
+        return currentTree;
+    }
+
+    public DependencyTree reorderWithAlignmentGuideWithTwoClassifier(BitextDependency bitextDependency) throws Exception {
+        DependencyTree tree = bitextDependency.getSourceTree();
+
+        HashSet<Integer> heads = new HashSet<Integer>();
+        for (int h = 1; h < tree.size(); h++)
+            if (tree.hasDep(h))
+                heads.add(h);
+
+        ArrayList<ContextInstance> reorderingInstances = new ArrayList<ContextInstance>();
+
+        for (int head : heads) {
+            if (bitextDependency.getTrainableHeads().contains(head)) {
+                HashSet<Integer> dx = bitextDependency.getSourceTree().getDependents(head);
+                HashSet<Integer> deps = new HashSet<Integer>(dx);
+                deps.add(head);
+                TreeSet<Integer> origOrderSet = new TreeSet<Integer>();
+                // origOrderSet.add(head);
+                for (int dep : deps)
+                    origOrderSet.add(dep);
+
+                int index = 0;
+                int[] ordering = new int[origOrderSet.size()];
+                HashMap<Integer, Integer> revOrdering = new HashMap<Integer, Integer>();
+                revOrdering.put(head, index);
+                // ordering[index++] = head;
+                for (int d : deps) {
+                    revOrdering.put(d, index);
+                    ordering[index++] = d;
+                }
+                try {
+                    TreeMap<Integer, Integer> changedOrder = new TreeMap<Integer, Integer>();
+
+                    SortedSet<Integer>[] alignedSet = bitextDependency.getAlignedWords();
+                    changedOrder.put(alignedSet[head].first(), head);
+                    for (int dep : origOrderSet)
+                        changedOrder.put(alignedSet[dep].first(), dep);
+
+                    int[] goldOrder = new int[1 + dx.size()];
+                    int i = 0;
+                    for (int dep : changedOrder.keySet()) {
+                        goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
+                    }
+
+                    int[] newOrder = new int[ordering.length];
+                    if (goldOrder != null)
+                        for (int o = 0; o < newOrder.length; o++)
+                            newOrder[o] = ordering[goldOrder[o]];
+                    else
+                        newOrder = ordering;
+
+
+                    ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
+                    reorderingInstances.add(bestCandidate);
+                } catch (Exception ex) {
+                    System.out.print("err!...");
+                }
+            } else {
+                HashSet<Integer> deps = tree.getDependents(head);
+                ArrayList<Integer> left = new ArrayList<Integer>();
+                ArrayList<Integer> right = new ArrayList<Integer>();
+
+                for (int d : deps) {
+                    ArrayList<Object>[] features = tree.extractPivotFeatures(head, d);
+                    double score = pivotClassifier.scores(features, true)[0];
+                    if (score >= 0)
+                        left.add(d);
+                    else
+                        right.add(d);
+                }
+
+                int[] leftChildren = new int[left.size()];
+                int[] rightChildren = new int[right.size()];
+
+                int i = 0;
+                for (int d : left)
+                    leftChildren[i++] = d;
+                i = 0;
+                for (int d : right)
+                    rightChildren[i++] = d;
+
+                int[] newOrder = new int[deps.size() + 1];
+                i = 0;
+                if (leftChildren.length > 1 && leftChildren.length <= maxLen) {
+                    ArrayList<Object>[] features = tree.extractMainFeatures(head, leftChildren);
+                    int l = 0;
+                    double bestScore = Double.NEGATIVE_INFINITY;
+                    String bestLabel = "";
+                    int index = leftChildren.length - 2;
+                    double[] score = leftClassifier[index].scores(features, true);
+                    for (String label : leftMostCommonPermutations[index].keySet()) {
+                        if (score[l] >= bestScore) {
+                            bestScore = score[l];
+                            bestLabel = label;
+                        }
+                        l++;
+                    }
+
+                    int[] order = leftMostCommonPermutations[index].get(bestLabel);
+                    for (int j = 0; j < order.length; j++)
+                        newOrder[j] = leftChildren[order[j]];
+                } else {
+                    for (int j = 0; j < leftChildren.length; j++)
+                        newOrder[j] = leftChildren[j];
+                }
+                newOrder[leftChildren.length] = head;
+
+                if (rightChildren.length > 1 && rightChildren.length <= maxLen) {
+                    ArrayList<Object>[] features = tree.extractMainFeatures(head, rightChildren);
+                    int l = 0;
+                    double bestScore = Double.NEGATIVE_INFINITY;
+                    String bestLabel = "";
+                    int index = rightChildren.length - 2;
+                    double[] score = rightClassifier[index].scores(features, true);
+                    for (String label : rightMostCommonPermutations[index].keySet()) {
+                        if (score[l] >= bestScore) {
+                            bestScore = score[l];
+                            bestLabel = label;
+                        }
+                        l++;
+                    }
+
+                    int[] order = rightMostCommonPermutations[index].get(bestLabel);
+                    for (int j = 0; j < order.length; j++)
+                        newOrder[j + leftChildren.length + 1] = rightChildren[order[j]];
+                } else {
+                    for (int j = 0; j < rightChildren.length; j++)
+                        newOrder[j + leftChildren.length + 1] = rightChildren[j];
+                }
+
                 ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
 
                 reorderingInstances.add(bestCandidate);
