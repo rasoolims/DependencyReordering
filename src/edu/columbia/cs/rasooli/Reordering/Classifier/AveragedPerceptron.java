@@ -73,8 +73,12 @@ public class AveragedPerceptron  implements Serializable,Classifier {
                     int offset = values.getOffset();
                     double[] weightVector = values.getArray();
 
-                    for (int d = offset; d < offset + weightVector.length; d++) {
-                        scores[d] += weightVector[d - offset];
+                    try {
+                        for (int d = offset; d < offset + weightVector.length; d++) {
+                            scores[d] += weightVector[d - offset];
+                        }
+                    } catch (Exception ex) {
+                        System.out.print("WHY?");
                     }
                 }
             }

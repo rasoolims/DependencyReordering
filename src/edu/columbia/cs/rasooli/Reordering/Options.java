@@ -27,6 +27,7 @@ public class Options {
     public int[] tunedIterations;
     public ClassifierType classifierType;
     public double pegasos_lambda=0.0001;
+    public boolean twoClasifier=true;
 
     public int maxIter;
     public String modelPath;
@@ -42,6 +43,7 @@ public class Options {
         numOfThreads=8;
         decodeWithAlignment=false;
         decode=false;
+        twoClasifier=true;
         tunedIterations = null;
         classifierType=ClassifierType.perceptron;
         pegasos_lambda=0.0001;
@@ -72,6 +74,8 @@ public class Options {
                 devIntersectionPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-p"))
                 universalPOSPath=new File(args[i+1]).getAbsolutePath();
+            else if(args[i].equals("-c1"))
+                twoClasifier=false;
             else if(args[i].equals("-c")) {
                 if (args[i + 1].equals("perceptron"))
                     classifierType = ClassifierType.perceptron;
@@ -109,7 +113,7 @@ public class Options {
         builder.append("to train a model\n");
         builder.append("java -jar reorderer.jar train -tt [train-tree-file] -ti [train-intersection-file] ");
         builder.append(" -dt [dev-tree-file(optional)] -di [dev-intersection-file(optional)] -m [model-file] -p [universal-pos-file] ");
-        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)] -c [perceptron or pegasos (default:perceptron)] -l [pegasos_lambda(default:0.0001)]\n");
+        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)] -c [perceptron or pegasos (default:perceptron)] -l [pegasos_lambda(default:0.0001)] -c1 (for using one classifer -- default left-right classifiers)\n");
         
        
         builder.append("\nto reorder input trees\n");
@@ -148,6 +152,7 @@ public class Options {
             builder.append("universal-pos: "+universalPOSPath+"\n");
             builder.append("training-iterations: "+maxIter+"\n");
             builder.append("topK: "+topK+"\n");
+            builder.append("left-right-classification: "+twoClasifier+"\n");
             builder.append("classifier_type: "+classifierType.toString()+"\n");
             if(classifierType==ClassifierType.pegasos)
             builder.append("lambda: "+pegasos_lambda+"\n");

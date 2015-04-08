@@ -30,11 +30,18 @@ public class Main {
                 System.out.println(options);
                 if (options.train) {
                     Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath,options.trainTreePath+".train",options.devTreePath+".dev",7,options.topK,324);
+                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK, 324, 189);
                   if(options.classifierType== ClassifierType.perceptron)
-                      trainer.trainWithPerceptron(options.maxIter, options.modelPath);
+                      if(options.twoClasifier)
+                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
+                      else                          
+                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, false);
                   else if(options.classifierType== ClassifierType.pegasos)
-                      trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda);
+                      if(options.twoClasifier)
+                          //todo still uses perceptron for two classifiers
+                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
+                      else
+                          trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda);
                 }
                 else if(options.decode || options.decodeWithAlignment){
                     Info info = new Info(options.modelPath, options.tunedIterations);
@@ -55,37 +62,12 @@ public class Main {
                 System.out.println(Options.showHelp());
         } else {
             System.out.println(Options.showHelp());
-            double lambda=1f;
-           /*
-            for (int t = 0; t < 5; t++) {
-                System.err.println("\nlambda " + lambda);
-                
-                Trainer trainer = new Trainer(p1, p2, p4, p5, p3, p1 + ".train", p4 + ".dev", 7, 20, 324);
-
-                trainer.trainWithPegasos(3, p6, 0.01f);
-
-                int[] tuned = {3, 3, 3, 3, 3, 3, 3};
-                Info info = new Info(p6, tuned);
-                OnlinePegasos[] classifier = new OnlinePegasos[info.getFinalWeights().length];
-             
-                for (int i = 0; i < classifier.length; i++) {
-                    classifier[i] = new OnlinePegasos(info.getTopK(), info.getFeatLen());
-                    classifier[i].setWeights(info.getFinalWeights()[i]);
-                }
-
-                Reorderer reorderer = new Reorderer(
-                        classifier, info.getMostCommonPermutations(), info.getUniversalPosMap(), info.getTopK(), 4, info.getMaps()
-                );
-                reorderer.decode(p4, p4 + ".out");
-                reorderer.decodeWithAlignmentGuide(p4, p5, p5 + ".out");
-                lambda/=10;
-            }
-            */
             System.err.println("\nperceptron ");
 
-            Trainer trainer = new Trainer(p1, p2, p4, p5, p3, p1 + ".train", p4 + ".dev", 7, 20, 324);
-            trainer.trainWithPerceptron(3, p6);
+            Trainer trainer = new Trainer(p1, p2, p4, p5, p3, 5, 20, 324, 189);
+            trainer.trainWithPerceptron(3, p6, true);
 
+            /*
             int[] tuned = {3, 3, 3, 3, 3, 3, 3};
             Info info = new Info(p6, tuned);
             AveragedPerceptron[] classifier=new AveragedPerceptron[info.getFinalWeights().length];
@@ -99,6 +81,7 @@ public class Main {
             );
             reorderer.decode(p4, p4 + ".out");
             reorderer.decodeWithAlignmentGuide(p4, p5, p5 + ".out");
+            */
         }
 
     }

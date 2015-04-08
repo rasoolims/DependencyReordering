@@ -256,6 +256,7 @@ public class ContextInstance implements Comparable {
         return features;
     }
 
+
     public DependencyTree getTree() {
         return tree;
     }
