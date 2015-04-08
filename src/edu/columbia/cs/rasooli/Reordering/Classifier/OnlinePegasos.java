@@ -42,7 +42,7 @@ public class OnlinePegasos implements Classifier {
     }
 
     
-   public void updateWeights(int goldLabel, int predictedLabel, ArrayList<Object>[] features){
+   public void updateWeights(int goldLabel, int predictedLabel, ArrayList<Object>[] features) throws Exception {
        double eta=1.f/(lambda*iteration);
        for(int i=0;i<features.length;i++) {
            for (Object feat : features[i]) {

@@ -14,9 +14,9 @@ public class CompactArray implements Serializable {
     double[] array;
     int offset;
 
-    public CompactArray(int offset, double[] array) {
+    public CompactArray(int offset, double[] array)  throws Exception{
         if (offset == -1)
-            System.out.print("WHY?");
+            throw  new Exception("offset -1");
         this.offset = offset;
         this.array = array;
     }

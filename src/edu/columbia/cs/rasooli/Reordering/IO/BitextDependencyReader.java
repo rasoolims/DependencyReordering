@@ -602,9 +602,8 @@ public class BitextDependencyReader {
     }
 
     //todo
-    public static Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> getLeftRightTrainData(String parsedFilePath, String alignIntersectionPath, HashMap<String, String> universalMap, IndexMaps maps, int maxLength) throws Exception {
-        BufferedReader depReader = new BufferedReader(new FileReader(parsedFilePath));
-        BufferedReader intersectionReader = new BufferedReader(new FileReader(alignIntersectionPath));
+    public static Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> getLeftRightTrainData(BufferedReader depReader,BufferedReader intersectionReader , HashMap<String, String> universalMap, IndexMaps maps, int maxLength, int maxInstance) throws Exception {
+         int instance=0;
 
         ArrayList<TrainData> leftTrainData = new ArrayList<TrainData>();
         ArrayList<TrainData> rightTrainData = new ArrayList<TrainData>();
@@ -743,14 +742,20 @@ public class BitextDependencyReader {
                             before = false;
                         pivotTrainData.add(new PivotTrainData(before, tree.extractPivotFeatures(head, dep)));
                     }
+                    instance++;
+                   
                 }
+                
+                
                 count++;
-                if (count % 10000 == 0)
-                    System.err.print(count + "...");
             }
+            if(instance>=maxInstance)
+                break;
         }
         System.err.print(count + "\n");
-
+        if (instance==0)
+            return null;
+        
         return new Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>>(pivotTrainData,
                 new Pair<ArrayList<TrainData>, ArrayList<TrainData>>(leftTrainData, rightTrainData));
     }

@@ -32,7 +32,7 @@ public class Info {
     IndexMaps maps;
     boolean twoClassifer;
     
-    public Info(Classifier[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalPosMap, int topK,IndexMaps maps){
+    public Info(Classifier[] classifier, HashMap<String,int[]>[]  mostCommonPermutations, HashMap<String,String> universalPosMap, int topK,IndexMaps maps) throws Exception {
         twoClassifer = false;
         finalLeftWeights = new HashMap[0][0];
         finalRightWeights = new HashMap[0][0];
@@ -67,7 +67,7 @@ public class Info {
     }
 
 
-    public Info(Classifier[] leftClassifier, Classifier[] rightClassifier, Classifier pivotClassifier, HashMap<String, int[]>[] mostLeftCommonPermutations, HashMap<String, int[]>[] mostRightCommonPermutations, HashMap<String, String> universalPosMap, int topK, IndexMaps maps) {
+    public Info(Classifier[] leftClassifier, Classifier[] rightClassifier, Classifier pivotClassifier, HashMap<String, int[]>[] mostLeftCommonPermutations, HashMap<String, int[]>[] mostRightCommonPermutations, HashMap<String, String> universalPosMap, int topK, IndexMaps maps) throws Exception {
         twoClassifer = true;
         finalWeights = new HashMap[0][0];
         mostCommonPermutations = new HashMap[0];
@@ -256,7 +256,7 @@ public class Info {
         return finalWeights;
     }
 
-    private CompactArray getAveragedCompactArray(CompactArray ca, CompactArray aca, int iteration) {
+    private CompactArray getAveragedCompactArray(CompactArray ca, CompactArray aca, int iteration) throws Exception{
         int offset = ca.getOffset();
         double[] a = ca.getArray();
         double[] aa = aca.getArray();

@@ -33,7 +33,7 @@ public class AveragedPerceptron  implements Serializable,Classifier {
         }
     }
 
-    public void updateWeight(int label, int slot, Object feature, double change) {
+    public void updateWeight(int label, int slot, Object feature, double change) throws Exception {
         CompactArray values = weights[slot].get(feature);
         CompactArray aValues;
         if (values == null) {
@@ -73,12 +73,8 @@ public class AveragedPerceptron  implements Serializable,Classifier {
                     int offset = values.getOffset();
                     double[] weightVector = values.getArray();
 
-                    try {
-                        for (int d = offset; d < offset + weightVector.length; d++) {
-                            scores[d] += weightVector[d - offset];
-                        }
-                    } catch (Exception ex) {
-                        System.out.print("WHY?");
+                    for (int d = offset; d < offset + weightVector.length; d++) {
+                        scores[d] += weightVector[d - offset];
                     }
                 }
             }
