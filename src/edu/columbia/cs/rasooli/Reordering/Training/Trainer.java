@@ -391,7 +391,7 @@ public class Trainer {
 
                     for (PivotTrainData trainData : devDataPairs.first) {
                         pcount++;
-                        double score = pivotClassifer.scores(trainData.features, true)[0];
+                        double score = pivotClassifer.scores(trainData.features)[0];
                         boolean decision = score >= 0 ? true : false;
                         if (decision == trainData.isBefore) pivotCorrect++;
                         allPivot++;
@@ -410,7 +410,7 @@ public class Trainer {
                         String goldLabel = trainData.goldLabel;
                         int bestLIndex = -1;
                         int goldIndex = -1;
-                        double[] scores = leftClassifier[index].scores(features, true);
+                        double[] scores = leftClassifier[index].scores(features);
 
                         int l = 0;
                         for (String label : mostCommonLeftPermutations[index].keySet()) {
@@ -444,7 +444,7 @@ public class Trainer {
                         String goldLabel = trainData.goldLabel;
                         int bestLIndex = -1;
                         int goldIndex = -1;
-                        double[] scores = rightClassifier[index].scores(features, true);
+                        double[] scores = rightClassifier[index].scores(features);
 
                         int l = 0;
                         for (String label : mostCommonRightPermutations[index].keySet()) {
