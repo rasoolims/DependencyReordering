@@ -217,7 +217,7 @@ public class Trainer {
             int[] sepLeftCount = new int[mostCommonLeftPermutations.length];
             int[] sepRightCount = new int[mostCommonRightPermutations.length];
 
-            int max = 100000;
+            int max = 400000;
 
             BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
             BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
