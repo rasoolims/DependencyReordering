@@ -345,13 +345,13 @@ public class Trainer {
             System.err.print(">> Correct pivot prediction: " + correctPredictions + "\n");
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
+            for (int b = 0; b < mostCommonLeftPermutations.length-2; b++) {
                 correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                 System.err.print("Correct left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances \n");
             }
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonRightPermutations.length; b++) {
+            for (int b = 0; b < mostCommonRightPermutations.length-2; b++) {
                 correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                 System.err.print("Correct right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
             }
@@ -470,13 +470,13 @@ public class Trainer {
                 System.err.print(">> Correct dev pivot prediction: " + correctPredictions + "\n");
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
+                for (int b = 0; b < mostCommonLeftPermutations.length-2; b++) {
                     correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                     System.err.print("Correct dev left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances\n");
                 }
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonRightPermutations.length; b++) {
+                for (int b = 0; b < mostCommonRightPermutations.length-2; b++) {
                     correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                     System.err.print("Correct dev right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
                 }

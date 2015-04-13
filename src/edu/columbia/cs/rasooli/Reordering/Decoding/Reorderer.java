@@ -383,15 +383,26 @@ public class Reorderer {
     public DependencyTree reorderWithAlignmentGuideWithTwoClassifier(BitextDependency bitextDependency) throws Exception {
         DependencyTree tree = bitextDependency.getSourceTree();
 
+        StringBuilder builder=new StringBuilder();
+        
+        builder.append("original tree\n");
+        builder.append(bitextDependency.getSourceTree().toConllOutput()+"\n");
+        builder.append("\nalignment\n");
+        builder.append(bitextDependency.getAlignedWordsStrings());
+        
         HashSet<Integer> heads = new HashSet<Integer>();
         for (int h = 1; h < tree.size(); h++)
             if (tree.hasDep(h))
                 heads.add(h);
 
         ArrayList<ContextInstance> reorderingInstances = new ArrayList<ContextInstance>();
-
+   
+        builder.append("\nprocessing heads\n");
         for (int head : heads) {
+            builder.append("head:"+head+"\n");
             if (bitextDependency.getTrainableHeads().contains(head)) {
+                builder.append("head:"+head+"trainable\n");
+
                 HashSet<Integer> dx = bitextDependency.getSourceTree().getDependents(head);
                 HashSet<Integer> deps = new HashSet<Integer>(dx);
                 deps.add(head);
@@ -423,13 +434,17 @@ public class Reorderer {
                         goldOrder[i++] = revOrdering.get(changedOrder.get(dep));
                     }
 
+                    builder.append("orders:\n") ;
                     int[] newOrder = new int[ordering.length];
                     if (goldOrder != null)
-                        for (int o = 0; o < newOrder.length; o++)
+                        for (int o = 0; o < newOrder.length; o++) {
                             newOrder[o] = ordering[goldOrder[o]];
+                            builder.append(newOrder[o]+" ");
+                        }
                     else
                         newOrder = ordering;
-
+                    
+                    builder.append("\n");
 
                     ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
                     reorderingInstances.add(bestCandidate);
@@ -462,6 +477,7 @@ public class Reorderer {
 
                 int[] newOrder = new int[deps.size() + 1];
                 i = 0;
+                builder.append("left: ");
                 if (leftChildren.length > 1 && leftChildren.length <= maxLen) {
                     ArrayList<Object>[] features = tree.extractMainFeatures(head, leftChildren);
                     int l = 0;
@@ -478,14 +494,21 @@ public class Reorderer {
                     }
 
                     int[] order = leftMostCommonPermutations[index].get(bestLabel);
-                    for (int j = 0; j < order.length; j++)
+                    for (int j = 0; j < order.length; j++) {
                         newOrder[j] = leftChildren[order[j]];
+                        builder.append(newOrder[j]+" ");
+                    }
                 } else {
-                    for (int j = 0; j < leftChildren.length; j++)
+                    for (int j = 0; j < leftChildren.length; j++) {
                         newOrder[j] = leftChildren[j];
+                        builder.append(newOrder[j]+" ");
+                    }
                 }
+                builder.append("middle: ");
+                builder.append( head+" ");
                 newOrder[leftChildren.length] = head;
-
+            
+                builder.append("right: ");
                 if (rightChildren.length > 1 && rightChildren.length <= maxLen) {
                     ArrayList<Object>[] features = tree.extractMainFeatures(head, rightChildren);
                     int l = 0;
@@ -502,24 +525,34 @@ public class Reorderer {
                     }
 
                     int[] order = rightMostCommonPermutations[index].get(bestLabel);
-                    for (int j = 0; j < order.length; j++)
+                    for (int j = 0; j < order.length; j++) {
                         newOrder[j + leftChildren.length + 1] = rightChildren[order[j]];
+                        builder.append(newOrder[j + leftChildren.length + 1]+" ");
+                    }
                 } else {
-                    for (int j = 0; j < rightChildren.length; j++)
+                    for (int j = 0; j < rightChildren.length; j++) {
                         newOrder[j + leftChildren.length + 1] = rightChildren[j];
+                        builder.append(newOrder[j + leftChildren.length + 1]+" ");
+                    }
                 }
-
+                builder.append("\n");
                 ContextInstance bestCandidate = new ContextInstance(head, newOrder, tree);
 
                 reorderingInstances.add(bestCandidate);
             }
         }
 
+        builder.append("\nreordering step by step\n");
         DependencyTree currentTree=tree;
         for(ContextInstance instance:reorderingInstances) {
             currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
+            builder.append(currentTree.toConllOutput()+"\n");
         }
+        builder.append("\nfinal tree\n");
+        builder.append(currentTree.toConllOutput()+"\n");
+        builder.append("\n----------------------------------------------------------------------------------------------------------\n");
 
+        System.out.println(builder.toString());
         return currentTree;
     }
 

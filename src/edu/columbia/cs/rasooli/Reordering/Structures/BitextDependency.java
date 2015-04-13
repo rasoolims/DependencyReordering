@@ -115,6 +115,15 @@ public class BitextDependency {
     public SortedSet<Integer>[] getAlignedWords() {
         return alignedWords;
     }
+    
+    public String getAlignedWordsStrings(){
+        StringBuilder output=new StringBuilder();
+        for(int i=0;i<alignedWords.length;i++){
+            for(int a:alignedWords[i])
+                output.append(i+"->"+a+"\n");
+        }
+        return output.toString();
+    }
 
     public DependencyTree getSourceTree() {
         return sourceTree;
