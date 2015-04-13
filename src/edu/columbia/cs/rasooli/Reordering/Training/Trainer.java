@@ -24,7 +24,7 @@ import java.util.HashMap;
 public class Trainer {
     HashMap<String, String> universalMap;
     IndexMaps maps;
-    int featLen;
+    int[] featLen;
     int pivotFeatLen;
     HashMap<String, int[]>[] mostCommonPermutations;
     HashMap<String, int[]>[] mostCommonRightPermutations;
@@ -40,14 +40,18 @@ public class Trainer {
     Classifier[] leftClassifier;
     Classifier[] rightClassifier;
 
-    public Trainer(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath, int maxLen, int topK, int featLen, int pivotFeatLen) throws Exception {
+    public Trainer(String trainTreePath, String trainIntersectionPath, String devTreePath, String devIntersectionPath, String universalPOSPath, int maxLen, int topK,  int pivotFeatLen) throws Exception {
         this.trainIntersectionPath = trainIntersectionPath;
         this.trainTreePath = trainTreePath;
         this.devTreePath = devTreePath;
         this.devIntersectionPath = devIntersectionPath;
         this.topK = topK;
         this.maxLen = maxLen;
-        this.featLen = featLen;
+        featLen = new int[maxLen];
+        for(int i=0;i<featLen.length;i++){
+            int x=9+16*(i+2);
+            featLen[i]=(x*(x+1))/2+x;
+        }
         this.pivotFeatLen = pivotFeatLen;
 
         universalMap = BitextDependencyReader.createUniversalMap(universalPOSPath);
@@ -70,7 +74,7 @@ public class Trainer {
         System.err.println("Training started...");
         classifier = new AveragedPerceptron[maxLen];
         for (int i = 0; i < maxLen; i++)
-            classifier[i] = new AveragedPerceptron(topK, featLen);
+            classifier[i] = new AveragedPerceptron(topK, featLen[i]);
         
         int max = 200000;
 
@@ -199,8 +203,8 @@ public class Trainer {
         rightClassifier = new AveragedPerceptron[maxLen-1];
         pivotClassifer = new AveragedPerceptron(1, pivotFeatLen);
         for (int i = 0; i < maxLen-1; i++) {
-            leftClassifier[i] = new AveragedPerceptron(topK, featLen);
-            rightClassifier[i] = new AveragedPerceptron(topK, featLen);
+            leftClassifier[i] = new AveragedPerceptron(topK, featLen[i]);
+            rightClassifier[i] = new AveragedPerceptron(topK, featLen[i]);
         }
 
         for (int i = 0; i < maxIter; i++) {
@@ -345,13 +349,13 @@ public class Trainer {
             System.err.print(">> Correct pivot prediction: " + correctPredictions + "\n");
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonLeftPermutations.length-2; b++) {
+            for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
                 correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                 System.err.print("Correct left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances \n");
             }
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonRightPermutations.length-2; b++) {
+            for (int b = 0; b < mostCommonRightPermutations.length; b++) {
                 correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                 System.err.print("Correct right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
             }
@@ -470,13 +474,13 @@ public class Trainer {
                 System.err.print(">> Correct dev pivot prediction: " + correctPredictions + "\n");
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonLeftPermutations.length-2; b++) {
+                for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
                     correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                     System.err.print("Correct dev left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances\n");
                 }
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonRightPermutations.length-2; b++) {
+                for (int b = 0; b < mostCommonRightPermutations.length; b++) {
                     correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                     System.err.print("Correct dev right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
                 }
@@ -490,7 +494,7 @@ public class Trainer {
         System.err.println("Training started...");
         classifier = new OnlinePegasos[maxLen];
         for (int i = 0; i < maxLen; i++)
-            classifier[i] = new OnlinePegasos(topK, featLen,lambda);
+            classifier[i] = new OnlinePegasos(topK, featLen[i],lambda);
         
         int max = 200000;
 

@@ -65,10 +65,10 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                labels[i + 1] = maps.strMap.get(l[i]);
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -81,7 +81,7 @@ public class BitextDependencyReader {
             }
 
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
 
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
@@ -129,10 +129,10 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                labels[i + 1] = maps.strMap.get(l[i]);
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -145,7 +145,7 @@ public class BitextDependencyReader {
             }
 
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
 
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
@@ -198,10 +198,10 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                labels[i + 1] =maps.strMap.get( l[i]);
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -214,7 +214,7 @@ public class BitextDependencyReader {
             }
 
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
 
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
@@ -328,10 +328,10 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                labels[i + 1] = maps.strMap.get(l[i]);
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -343,7 +343,7 @@ public class BitextDependencyReader {
                 wordStructs[i] = new Word(i, words[i], tags[i], universalMap.get(tags[i]), maps);
             }
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
             for (int i = 0; i < alignedWords.length; i++)
@@ -453,10 +453,10 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                labels[i + 1] = maps.strMap.get( l[i]);
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -469,7 +469,7 @@ public class BitextDependencyReader {
             }
 
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
 
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];
@@ -631,10 +631,13 @@ public class BitextDependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                if(maps.strMap.containsKey(l[i]))
+                labels[i + 1] =maps.strMap.get( l[i]);
+            else
+                labels[i+1]=-1;
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -647,7 +650,7 @@ public class BitextDependencyReader {
             }
 
 
-            DependencyTree tree = new DependencyTree(wordStructs, heads, labels);
+            DependencyTree tree = new DependencyTree(wordStructs, heads, labels,l);
 
             String[] split = intersectionReader.readLine().trim().split(" ");
             SortedSet<Integer>[] alignedWords = new SortedSet[words.length];

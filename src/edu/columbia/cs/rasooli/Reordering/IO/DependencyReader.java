@@ -60,7 +60,7 @@ public class DependencyReader {
 
 
             String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            labels[0] = "ROOT";
             for (int i = 0; i < l.length; i++)
                 labels[i + 1] = l[i];
 
@@ -98,10 +98,13 @@ public class DependencyReader {
             for (int i = 0; i < t.length; i++)
                 tags[i + 1] = t[i];
 
-            String[] labels = new String[l.length + 1];
-            labels[0] = "";
+            int[] labels = new int[l.length + 1];
+            labels[0] = maps.strMap.get("ROOT");
             for (int i = 0; i < l.length; i++)
-                labels[i + 1] = l[i];
+                if(maps.strMap.containsKey(l[i]))
+                labels[i + 1] = maps.strMap.get(l[i]);
+            else
+                labels[i+1]=-1;
 
             int[] heads = new int[h.length + 1];
             heads[0] = -1;
@@ -114,7 +117,7 @@ public class DependencyReader {
             }
 
 
-            tree = new DependencyTree(wordStructs, heads, labels);
+            tree = new DependencyTree(wordStructs, heads, labels,l);
             return tree;
         }
         return tree;

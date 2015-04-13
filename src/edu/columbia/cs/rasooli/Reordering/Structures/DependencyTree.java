@@ -26,16 +26,20 @@ public class DependencyTree {
     int[] heads;
 
     // use true order
-    String[] labels;
+    int[] labels;
+    String[] labelsStr;
 
     HashSet<Integer>[] deps;
 
     int[] order;
 
-    public DependencyTree(Word[] words, int[] heads, String[] labels) {
+    public DependencyTree(Word[] words, int[] heads, int[] labels, String[] labelsStr) {
         this.words = words;
         this.heads = heads;
         this.labels = labels;
+        this.labelsStr=labelsStr;
+        if(labelsStr==null)
+            System.out.print("ERROR!");
 
         deps = new HashSet[words.length];
         for (int i = 0; i < heads.length; i++)
@@ -53,10 +57,11 @@ public class DependencyTree {
         }
     }
 
-    public DependencyTree(Word[] words, int[] heads, String[] labels, int[] indices, int[] order) {
+    public DependencyTree(Word[] words, int[] heads, int[] labels, int[] indices, int[] order, String[] labelsStr) {
         this.words = words;
         this.heads = heads;
         this.labels = labels;
+        this.labelsStr=labelsStr;
 
         deps = new HashSet[words.length];
         for (int i = 0; i < heads.length; i++)
@@ -82,7 +87,7 @@ public class DependencyTree {
         return heads[index];
     }
 
-    public String getCurrentLabel(int index) {
+    public int getCurrentLabel(int index) {
         return labels[index];
     }
 
@@ -95,7 +100,7 @@ public class DependencyTree {
     }
 
     public DependencyTree getFullOrder(int[] instanceOrder, int head) throws Exception {
-        DependencyTree tree = new DependencyTree(words, heads, labels, indices, order);
+        DependencyTree tree = new DependencyTree(words, heads, labels, indices, order,labelsStr);
 
         HashSet<Integer> allHeadSubtree = getAllInSubtree(head);
 
@@ -216,7 +221,7 @@ public class DependencyTree {
         
     }
     
-    public String toConllOutput(){
+    public String toConllOutput(final IndexMaps maps){
         StringBuilder builder=new StringBuilder();
         for(int j=1;j<getOrder().length;j++) {
             int i=getOrder()[j];
@@ -224,9 +229,13 @@ public class DependencyTree {
             String pos=   getCurrentWord(i).getfPos();
             String cpos=   getCurrentWord(i).getcPos();
             int head=getCurrentIndex(getCurrentHead(i));
-            String label=getCurrentLabel(j);
-            String out=j+"\t"+wordForm+"\t"+wordForm+"\t"+pos+"\t"+cpos+ "\t_\t"+head+"\t"+label+"\t_\t_\n";
-            builder.append(out);
+            try {
+                String label = labelsStr[i - 1];
+                String out = j + "\t" + wordForm + "\t" + wordForm + "\t" + pos + "\t" + cpos + "\t_\t" + head + "\t" + label + "\t_\t_\n";
+                builder.append(out);
+            }catch (Exception ex){
+                System.out.print("HERE!");
+            }
         }
         builder.append("\n");
         return builder.toString();
@@ -238,7 +247,8 @@ public class DependencyTree {
 
     //todo
     public ArrayList<Object>[] extractMainFeatures(int headIndex, int[] children) {
-        int size = 324;
+       int x=9+16*children.length;
+        int size=(x*(x+1))/2+x;
         ArrayList<Object>[] features = new ArrayList[size];
         for (int i = 0; i < size; i++)
             features[i] = new ArrayList<Object>();
@@ -254,10 +264,7 @@ public class DependencyTree {
 
         int currIndex = index;
         for (int i = 0; i < children.length; i++) {
-            if (children[i] == headIndex)
-                continue;
-
-            index = currIndex;
+           // index = currIndex;
 
             //region children
             Position position = Position.before;
@@ -273,6 +280,7 @@ public class DependencyTree {
             features[index].add(position.value | (child.wordFormIndex << 2));
             features[index + 1].add(position.value | (child.cPosIndex << 2));
             features[index + 2].add(position.value | (child.fPosIndex << 2));
+            features[index + 2].add(position.value | (labels[indices[children[i]]] << 2));
             //endregion
 
             //region there is a gap with head
@@ -318,6 +326,7 @@ public class DependencyTree {
             }
             index += 6;
             //endregion
+            
         }
 
         //region left and right siblings of head
@@ -392,9 +401,8 @@ public class DependencyTree {
         return features;
     }
 
-
     public ArrayList<Object>[] extractPivotFeatures(int headIndex, int child) {
-        int size = 189;
+        int size = 190;
         ArrayList<Object>[] features = new ArrayList[size];
         for (int i = 0; i < size; i++)
             features[i] = new ArrayList<Object>();
@@ -426,6 +434,7 @@ public class DependencyTree {
         features[index].add(position.value | (childWord.wordFormIndex << 2));
         features[index + 1].add(position.value | (childWord.cPosIndex << 2));
         features[index + 2].add(position.value | (childWord.fPosIndex << 2));
+        features[index + 2].add(position.value | (labels[indices[child]] << 2));
         //endregion
 
         //region there is a gap with head
@@ -524,5 +533,4 @@ public class DependencyTree {
 
         return features;
     }
-
 }

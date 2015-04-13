@@ -386,7 +386,7 @@ public class Reorderer {
         StringBuilder builder=new StringBuilder();
         
         builder.append("original tree\n");
-        builder.append(bitextDependency.getSourceTree().toConllOutput()+"\n");
+        builder.append(bitextDependency.getSourceTree().toConllOutput(maps)+"\n");
         builder.append("\nalignment\n");
         builder.append(bitextDependency.getAlignedWordsStrings());
         
@@ -546,10 +546,10 @@ public class Reorderer {
         DependencyTree currentTree=tree;
         for(ContextInstance instance:reorderingInstances) {
             currentTree = (new ContextInstance(instance.getHeadIndex(), instance.getOrder(), currentTree)).getTree();
-            builder.append(currentTree.toConllOutput()+"\n");
+            builder.append(currentTree.toConllOutput(maps)+"\n");
         }
         builder.append("\nfinal tree\n");
-        builder.append(currentTree.toConllOutput()+"\n");
+        builder.append(currentTree.toConllOutput(maps)+"\n");
         builder.append("\n----------------------------------------------------------------------------------------------------------\n");
 
         System.out.println(builder.toString());
@@ -570,7 +570,7 @@ public class Reorderer {
         int c=0;
         String[] output=new String[1000];
         while ((tree = DependencyReader.readNextDependencyTree(reader, universalMap, maps)) != null) {
-            pool.submit(new TreeReorderingThread(c, tree, this));
+            pool.submit(new TreeReorderingThread(c, tree, this,maps));
             count++;
             c++;
 
@@ -623,7 +623,7 @@ public class Reorderer {
         String[] output=new String[1000];
         int c=0;
         while ((bitextDependency = BitextDependencyReader.readNextBitextDependency(reader, inersectionReader, universalMap, maps)) != null) {
-          pool.submit(new BitextReorderingThread(c,bitextDependency,this));
+          pool.submit(new BitextReorderingThread(c,bitextDependency,this,maps));
             count++;
             c++;
 

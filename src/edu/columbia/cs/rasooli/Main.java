@@ -30,7 +30,7 @@ public class Main {
                 System.out.println(options);
                 if (options.train) {
                     Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK, 324, 189);
+                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
                   if(options.classifierType== ClassifierType.perceptron)
                       if(options.twoClasifier)
                           trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
@@ -92,7 +92,7 @@ public class Main {
             System.out.println(Options.showHelp());
             System.err.println("\nperceptron ");
 
-            Trainer trainer = new Trainer(p1, p2, p4, p5, p3, 5, 20, 324, 189);
+            Trainer trainer = new Trainer(p1, p2, p4, p5, p3, 5, 20,  190);
             trainer.trainWithPerceptron(3, p6, true);
 
             int[] tuned = {3, 3, 3, 3, 3, 3, 3, 3, 3};
