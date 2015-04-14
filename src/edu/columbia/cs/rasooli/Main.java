@@ -29,19 +29,27 @@ public class Main {
             if (options.hasSufficientArguments()) {
                 System.out.println(options);
                 if (options.train) {
-                    Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                            options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
+                   
                   if(options.classifierType== ClassifierType.perceptron)
-                      if(options.twoClasifier)
+                      if(options.twoClasifier) {
+                          Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                                  options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 5, options.topK,  189);
                           trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
-                      else                          
+                      }
+                      else {
+                          Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                                  options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
                           trainer.trainWithPerceptron(options.maxIter, options.modelPath, false);
-                  else if(options.classifierType== ClassifierType.pegasos)
-                      if(options.twoClasifier)
+                      }
+                  else if(options.classifierType== ClassifierType.pegasos) {
+                      Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                              options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
+                      if (options.twoClasifier)
                           //todo still uses perceptron for two classifiers
                           trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
                       else
                           trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda);
+                  }
                 }
                 else if(options.decode || options.decodeWithAlignment){
                     Info info = new Info(options.modelPath, options.tunedIterations);

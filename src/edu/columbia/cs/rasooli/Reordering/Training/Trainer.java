@@ -213,13 +213,13 @@ public class Trainer {
             int pcount = 0;
             int lcount = 0;
             int rcount = 0;
-            double[] leftCorrect = new double[maxLen];
-            double[] rightCorrect = new double[maxLen];
+            double[] leftCorrect = new double[leftClassifier.length];
+            double[] rightCorrect = new double[rightClassifier.length];
             double pivotCorrect = 0;
             int allPivot = 0;
 
-            int[] sepLeftCount = new int[mostCommonLeftPermutations.length];
-            int[] sepRightCount = new int[mostCommonRightPermutations.length];
+            int[] sepLeftCount = new int[leftClassifier.length];
+            int[] sepRightCount = new int[rightClassifier.length];
 
             int max = 400000;
 
@@ -265,6 +265,8 @@ public class Trainer {
                     lcount++;
 
                     int index = trainData.index;
+                    if(index>=leftClassifier.length)
+                        continue;
                     ArrayList<Object>[] features = trainData.features;
                     double bestScore = Double.NEGATIVE_INFINITY;
                     String goldLabel = trainData.goldLabel;
@@ -307,6 +309,10 @@ public class Trainer {
                     rcount++;
 
                     int index = trainData.index;
+
+                    if(index>=rightClassifier.length)
+                        continue;
+
                     ArrayList<Object>[] features = trainData.features;
                     double bestScore = Double.NEGATIVE_INFINITY;
                     String goldLabel = trainData.goldLabel;
@@ -349,13 +355,13 @@ public class Trainer {
             System.err.print(">> Correct pivot prediction: " + correctPredictions + "\n");
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
+            for (int b = 0; b < leftClassifier.length; b++) {
                 correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                 System.err.print("Correct left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances \n");
             }
             System.err.print("\n");
 
-            for (int b = 0; b < mostCommonRightPermutations.length; b++) {
+            for (int b = 0; b < rightClassifier.length; b++) {
                 correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                 System.err.print("Correct right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
             }
@@ -375,12 +381,12 @@ public class Trainer {
             //region dev
             Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> devDataPairs = null;
             if (devTreePath != "") {
-                leftCorrect = new double[maxLen];
-                rightCorrect = new double[maxLen];
+                leftCorrect = new double[rightClassifier.length];
+                rightCorrect = new double[rightClassifier.length];
                 pivotCorrect = 0;
                 allPivot = 0;
-                sepLeftCount = new int[mostCommonLeftPermutations.length];
-                sepRightCount = new int[mostCommonRightPermutations.length];
+                sepLeftCount = new int[leftClassifier.length];
+                sepRightCount = new int[rightClassifier.length];
 
                 BufferedReader devTreeReader = new BufferedReader(new FileReader(devTreePath));
                 BufferedReader devIntersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
@@ -409,6 +415,8 @@ public class Trainer {
                     for (TrainData trainData : devDataPairs.second.first) {
                         lcount++;
                         int index = trainData.index;
+                        if(index>=leftClassifier.length)
+                            continue;
                         ArrayList<Object>[] features = trainData.features;
                         double bestScore = Double.NEGATIVE_INFINITY;
                         String goldLabel = trainData.goldLabel;
@@ -443,6 +451,8 @@ public class Trainer {
                         rcount++;
 
                         int index = trainData.index;
+                        if(index>=rightClassifier.length)
+                            continue;
                         ArrayList<Object>[] features = trainData.features;
                         double bestScore = Double.NEGATIVE_INFINITY;
                         String goldLabel = trainData.goldLabel;
@@ -474,13 +484,13 @@ public class Trainer {
                 System.err.print(">> Correct dev pivot prediction: " + correctPredictions + "\n");
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonLeftPermutations.length; b++) {
+                for (int b = 0; b < leftCorrect.length; b++) {
                     correctPredictions = 100f * leftCorrect[b] / sepLeftCount[b];
                     System.err.print("Correct dev left prediction " + b + ":" + correctPredictions + " from " + sepLeftCount[b] + " instances\n");
                 }
                 System.err.print("\n");
 
-                for (int b = 0; b < mostCommonRightPermutations.length; b++) {
+                for (int b = 0; b < rightCorrect.length; b++) {
                     correctPredictions = 100f * rightCorrect[b] / sepRightCount[b];
                     System.err.print("Correct dev right prediction " + b + ":" + correctPredictions + " from " + sepRightCount[b] + " instances\n");
                 }
