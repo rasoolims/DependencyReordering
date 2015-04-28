@@ -226,7 +226,7 @@ public class Trainer {
             BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
             BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
             Pair<ArrayList<PivotTrainData>, Pair<ArrayList<TrainData>, ArrayList<TrainData>>> dataPairs = null;
-            while ((dataPairs = BitextDependencyReader.getLeftRightTrainData(depReader, intersectionReader, universalMap, maps, maxLen, 100000)) != null) {
+            while ((dataPairs = BitextDependencyReader.getLeftRightTrainData(depReader, intersectionReader, universalMap, maps, maxLen, max)) != null) {
 
                 //region training pivot
                 System.err.println("Training pivot classifier");
