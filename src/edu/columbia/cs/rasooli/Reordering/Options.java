@@ -98,7 +98,7 @@ public class Options {
         builder.append("to train a model\n");
         builder.append("java -jar reorderer.jar train -tt [train-tree-file] -ti [train-intersection-file] ");
         builder.append(" -dt [dev-tree-file(optional)] -di [dev-intersection-file(optional)] -m [model-file] -p [universal-pos-file] ");
-        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)] -c [perceptron or pegasos (default:perceptron)] -l [pegasos_lambda(default:0.0001)] -c1 (for using one classifer -- default left-right classifiers)\n");
+        builder.append("-iter [#training-iterations] -top [top-k-pruning(default:10)] -nt [#threads(default:8)] -c1 (for using one classifer; default left-right classifiers)\n");
         builder.append("\nto reorder input trees\n");
         builder.append("java -jar reorderer.jar  decode -m [model-file] -i [input-file] -o [output-file]  -nt [#threads(default:8)] -tune [numbers separated by comma]\n");
         builder.append("\nto reorder input trees with alignment guide\n");
