@@ -2,8 +2,6 @@ package edu.columbia.cs.rasooli.Reordering.Structures;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
-import edu.columbia.cs.rasooli.Reordering.Classifier.OnlinePegasos;
-import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
 
 import java.io.*;
 import java.util.HashMap;
@@ -50,17 +48,13 @@ public class Info {
         this.featLen = classifier[0].featLen();
         
         for(int f=0;f<finalWeights.length;f++) {
-            if(classifier[f].getType()== ClassifierType.pegasos){
-                finalWeights[f]=((OnlinePegasos)classifier[f]).getWeights();
-            }else  if(classifier[f].getType()== ClassifierType.perceptron) {
-                finalWeights[f] = new HashMap[classifier[f].featLen()];
-                for (int i = 0; i < classifier[f].featLen(); i++) {
-                    finalWeights[f][i] = new HashMap<Object, CompactArray>();
-                    for (Object feat : ((AveragedPerceptron)classifier[f]).getWeights()[i].keySet()) {
-                        CompactArray vals = ((AveragedPerceptron)classifier[f]).getWeights()[i].get(feat);
-                        CompactArray avgVals = ((AveragedPerceptron)classifier[f]).getAvgWeights()[i].get(feat);
-                        finalWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, classifier[f].getIteration()));
-                    }
+            finalWeights[f] = new HashMap[classifier[f].featLen()];
+            for (int i = 0; i < classifier[f].featLen(); i++) {
+                finalWeights[f][i] = new HashMap<Object, CompactArray>();
+                for (Object feat : ((AveragedPerceptron) classifier[f]).getWeights()[i].keySet()) {
+                    CompactArray vals = ((AveragedPerceptron) classifier[f]).getWeights()[i].get(feat);
+                    CompactArray avgVals = ((AveragedPerceptron) classifier[f]).getAvgWeights()[i].get(feat);
+                    finalWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, classifier[f].getIteration()));
                 }
             }
         }
@@ -82,17 +76,13 @@ public class Info {
         finalLeftWeights = new HashMap[leftClassifier.length][];
         this.featLen = leftClassifier[0].featLen();
         for (int f = 0; f < finalLeftWeights.length; f++) {
-            if (leftClassifier[f].getType() == ClassifierType.pegasos) {
-                finalLeftWeights[f] = ((OnlinePegasos) leftClassifier[f]).getWeights();
-            } else if (leftClassifier[f].getType() == ClassifierType.perceptron) {
-                finalLeftWeights[f] = new HashMap[leftClassifier[f].featLen()];
-                for (int i = 0; i < leftClassifier[f].featLen(); i++) {
-                    finalLeftWeights[f][i] = new HashMap<Object, CompactArray>();
-                    for (Object feat : ((AveragedPerceptron) leftClassifier[f]).getWeights()[i].keySet()) {
-                        CompactArray vals = ((AveragedPerceptron) leftClassifier[f]).getWeights()[i].get(feat);
-                        CompactArray avgVals = ((AveragedPerceptron) leftClassifier[f]).getAvgWeights()[i].get(feat);
-                        finalLeftWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, leftClassifier[f].getIteration()));
-                    }
+            finalLeftWeights[f] = new HashMap[leftClassifier[f].featLen()];
+            for (int i = 0; i < leftClassifier[f].featLen(); i++) {
+                finalLeftWeights[f][i] = new HashMap<Object, CompactArray>();
+                for (Object feat : ((AveragedPerceptron) leftClassifier[f]).getWeights()[i].keySet()) {
+                    CompactArray vals = ((AveragedPerceptron) leftClassifier[f]).getWeights()[i].get(feat);
+                    CompactArray avgVals = ((AveragedPerceptron) leftClassifier[f]).getAvgWeights()[i].get(feat);
+                    finalLeftWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, leftClassifier[f].getIteration()));
                 }
             }
         }
@@ -100,37 +90,27 @@ public class Info {
         finalRightWeights = new HashMap[rightClassifier.length][];
         this.featLen = rightClassifier[0].featLen();
         for (int f = 0; f < finalRightWeights.length; f++) {
-            if (rightClassifier[f].getType() == ClassifierType.pegasos) {
-                finalRightWeights[f] = ((OnlinePegasos) rightClassifier[f]).getWeights();
-            } else if (rightClassifier[f].getType() == ClassifierType.perceptron) {
-                finalRightWeights[f] = new HashMap[rightClassifier[f].featLen()];
-                for (int i = 0; i < rightClassifier[f].featLen(); i++) {
-                    finalRightWeights[f][i] = new HashMap<Object, CompactArray>();
-                    for (Object feat : ((AveragedPerceptron) rightClassifier[f]).getWeights()[i].keySet()) {
-                        CompactArray vals = ((AveragedPerceptron) rightClassifier[f]).getWeights()[i].get(feat);
-                        CompactArray avgVals = ((AveragedPerceptron) rightClassifier[f]).getAvgWeights()[i].get(feat);
-                        finalRightWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, rightClassifier[f].getIteration()));
-                    }
+            finalRightWeights[f] = new HashMap[rightClassifier[f].featLen()];
+            for (int i = 0; i < rightClassifier[f].featLen(); i++) {
+                finalRightWeights[f][i] = new HashMap<Object, CompactArray>();
+                for (Object feat : ((AveragedPerceptron) rightClassifier[f]).getWeights()[i].keySet()) {
+                    CompactArray vals = ((AveragedPerceptron) rightClassifier[f]).getWeights()[i].get(feat);
+                    CompactArray avgVals = ((AveragedPerceptron) rightClassifier[f]).getAvgWeights()[i].get(feat);
+                    finalRightWeights[f][i].put(feat, getAveragedCompactArray(vals, avgVals, rightClassifier[f].getIteration()));
                 }
             }
         }
 
         pivotWeights = new HashMap[pivotClassifier.featLen()];
-        if (pivotClassifier.getType() == ClassifierType.pegasos) {
-            pivotWeights = ((OnlinePegasos) pivotClassifier).getWeights();
-        } else if (pivotClassifier.getType() == ClassifierType.perceptron) {
-            pivotWeights = new HashMap[pivotClassifier.featLen()];
-            for (int i = 0; i < pivotClassifier.featLen(); i++) {
-                pivotWeights[i] = new HashMap<Object, CompactArray>();
-                for (Object feat : ((AveragedPerceptron) pivotClassifier).getWeights()[i].keySet()) {
-                    CompactArray vals = ((AveragedPerceptron) pivotClassifier).getWeights()[i].get(feat);
-                    CompactArray avgVals = ((AveragedPerceptron) pivotClassifier).getAvgWeights()[i].get(feat);
-                    pivotWeights[i].put(feat, getAveragedCompactArray(vals, avgVals, pivotClassifier.getIteration()));
-                }
+        pivotWeights = new HashMap[pivotClassifier.featLen()];
+        for (int i = 0; i < pivotClassifier.featLen(); i++) {
+            pivotWeights[i] = new HashMap<Object, CompactArray>();
+            for (Object feat : ((AveragedPerceptron) pivotClassifier).getWeights()[i].keySet()) {
+                CompactArray vals = ((AveragedPerceptron) pivotClassifier).getWeights()[i].get(feat);
+                CompactArray avgVals = ((AveragedPerceptron) pivotClassifier).getAvgWeights()[i].get(feat);
+                pivotWeights[i].put(feat, getAveragedCompactArray(vals, avgVals, pivotClassifier.getIteration()));
             }
-
         }
-
     }
 
 

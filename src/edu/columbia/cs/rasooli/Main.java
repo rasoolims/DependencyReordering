@@ -2,7 +2,6 @@ package edu.columbia.cs.rasooli;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Decoding.Reorderer;
-import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
 import edu.columbia.cs.rasooli.Reordering.Options;
 import edu.columbia.cs.rasooli.Reordering.Structures.Info;
 import edu.columbia.cs.rasooli.Reordering.Training.Trainer;
@@ -10,13 +9,10 @@ import edu.columbia.cs.rasooli.Reordering.Training.Trainer;
 import java.io.File;
 
 public class Main {
-
     public static void main(String[] args) throws Exception {
         String filePath = new File("").getAbsolutePath();
         String p1 = filePath + "/sample_data/parse.mst.en";
         String p2 = filePath + "/sample_data/intersection.txt";
-      //  p1="/tmp/parse.train";
-      //  p2="/tmp/intersection.train";
         String p3 = filePath + "/sample_data/en-ptb.map";
         String p4 = filePath + "/sample_data/parse.mst.en.dev";
         String p5 = filePath + "/sample_data/intersection.txt.dev";
@@ -29,27 +25,15 @@ public class Main {
             if (options.hasSufficientArguments()) {
                 System.out.println(options);
                 if (options.train) {
-                   
-                  if(options.classifierType== ClassifierType.perceptron)
-                      if(options.twoClasifier) {
-                          Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                                  options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 5, options.topK,  189);
-                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
-                      }
-                      else {
-                          Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                                  options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
-                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, false);
-                      }
-                  else if(options.classifierType== ClassifierType.pegasos) {
-                      Trainer trainer=new Trainer(options.trainTreePath, options.trainIntersectionPath,
-                              options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK,  189);
-                      if (options.twoClasifier)
-                          //todo still uses perceptron for two classifiers
-                          trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
-                      else
-                          trainer.trainWithPegasos(options.maxIter, options.modelPath, options.pegasos_lambda);
-                  }
+                    if (options.twoClasifier) {
+                        Trainer trainer = new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                                options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 5, options.topK, 189);
+                        trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
+                    } else {
+                        Trainer trainer = new Trainer(options.trainTreePath, options.trainIntersectionPath,
+                                options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 7, options.topK, 189);
+                        trainer.trainWithPerceptron(options.maxIter, options.modelPath, false);
+                    }
                 }
                 else if(options.decode || options.decodeWithAlignment){
                     Info info = new Info(options.modelPath, options.tunedIterations);
@@ -68,7 +52,6 @@ public class Main {
 
                         AveragedPerceptron pivotClassifer = new AveragedPerceptron(1, info.getPivotWeights().length);
                         pivotClassifer.setAvgWeights(info.getPivotWeights());
-
 
                         Reorderer reorderer = new Reorderer(
                                 leftClassifier, rightClassifier, pivotClassifer, info.getMostLeftCommonPermutations(), info.getMostRightCommonPermutations(),

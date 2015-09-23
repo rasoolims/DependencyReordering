@@ -2,7 +2,6 @@ package edu.columbia.cs.rasooli.Reordering.Training;
 
 import edu.columbia.cs.rasooli.Reordering.Classifier.AveragedPerceptron;
 import edu.columbia.cs.rasooli.Reordering.Classifier.Classifier;
-import edu.columbia.cs.rasooli.Reordering.Classifier.OnlinePegasos;
 import edu.columbia.cs.rasooli.Reordering.IO.BitextDependencyReader;
 import edu.columbia.cs.rasooli.Reordering.IO.DependencyReader;
 import edu.columbia.cs.rasooli.Reordering.Structures.IndexMaps;
@@ -496,129 +495,6 @@ public class Trainer {
                 }
             }
             //endregion
-        }
-    }
-
-
-    public void trainWithPegasos(int maxIter, String modelPath, double lambda) throws Exception {
-        System.err.println("Training started...");
-        classifier = new OnlinePegasos[maxLen];
-        for (int i = 0; i < maxLen; i++)
-            classifier[i] = new OnlinePegasos(topK, featLen[i],lambda);
-        
-        int max = 200000;
-
-        for (int i = 0; i < maxIter; i++) {
-            long start = System.currentTimeMillis();
-            System.err.println("\nIteration: " + (i + 1) + "...");
-            int count = 0;
-            int cCount = 0;
-            double[] correct = new double[mostCommonPermutations.length];
-            int[] sepCount = new int[mostCommonPermutations.length];
-
-            BufferedReader depReader = new BufferedReader(new FileReader(trainTreePath));
-            BufferedReader intersectionReader = new BufferedReader(new FileReader(trainIntersectionPath));
-            ArrayList<TrainData> data;
-
-            while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
-                for (TrainData trainData : data) {
-                    count++;
-
-                    int index = trainData.index;
-                    ArrayList<Object>[] features = trainData.features;
-                    double bestScore = Double.NEGATIVE_INFINITY;
-                    String goldLabel = trainData.goldLabel;
-                    int bestLIndex = -1;
-                    int goldIndex = -1;
-                    double[] scores = classifier[index].scores(features, false);
-
-                    int l = 0;
-                    for (String label : mostCommonPermutations[index].keySet()) {
-                        if (scores[l] > bestScore) {
-                            bestScore = scores[l];
-                            bestLIndex = l;
-                        }
-                        if (label.equals(goldLabel))
-                            goldIndex = l;
-                        l++;
-                    }
-
-                    if (goldIndex != bestLIndex) {
-                        OnlinePegasos pegas=(OnlinePegasos)classifier[index];
-                        pegas.updateWeights(goldIndex,bestLIndex,features);
-                    } else {
-                        correct[index]++;
-                        cCount++;
-                    }
-                    sepCount[index]++;
-
-                    classifier[index].incrementIteration();
-                    if (count % 10000 == 0)
-                        System.err.print(count + "...");
-                }
-            }
-            System.err.print(count + "\n");
-            double correctPredictions = 100f * cCount / count;
-            System.err.print("Correct prediction :" + correctPredictions + "\n");
-            Info info = new Info(classifier, mostCommonPermutations, universalMap, topK, maps);
-
-            if (i == 0)
-                info.saveInitModel(modelPath);
-
-            info.saveModel(modelPath + "_iter" + (i + 1));
-
-            long end = System.currentTimeMillis();
-            long elapsed = (end - start) / 1000;
-            System.err.println("time for training " + elapsed + " seconds");
-
-
-            if (!devTreePath.equals("")) {
-                depReader = new BufferedReader(new FileReader(devTreePath));
-                intersectionReader = new BufferedReader(new FileReader(devIntersectionPath));
-
-                count = 0;
-                correct = new double[mostCommonPermutations.length];
-                sepCount = new int[mostCommonPermutations.length];
-
-                while ((data = BitextDependencyReader.getNextTrainData(depReader, intersectionReader, universalMap, maps, mostCommonPermutations, max)) != null) {
-                    for (TrainData trainData : data) {
-                        count++;
-
-                        int index = trainData.index;
-                        ArrayList<Object>[] features = trainData.features;
-
-                        double bestScore = Double.NEGATIVE_INFINITY;
-                        String goldLabel = trainData.goldLabel;
-                        int bestLIndex = -1;
-                        int goldIndex = -1;
-                        double[] scores = classifier[index].scores(features);
-
-                        int l = 0;
-                        for (String label : mostCommonPermutations[index].keySet()) {
-                            if (scores[l] > bestScore) {
-                                bestScore = scores[l];
-                                bestLIndex = l;
-                            }
-                            if (label.equals(goldLabel))
-                                goldIndex = l;
-                            l++;
-                        }
-
-                        if (goldIndex == bestLIndex)
-                            correct[index]++;
-                        sepCount[index]++;
-
-                        if (count % 10000 == 0)
-                            System.err.print(count + "...");
-                    }
-                }
-            }
-
-            System.err.print(count + "\n");
-            for (int b = 0; b < mostCommonPermutations.length; b++) {
-                correctPredictions = 100f * correct[b] / sepCount[b];
-                System.err.print("Correct prediction " + b + ":" + correctPredictions + "\n");
-            }
         }
     }
 

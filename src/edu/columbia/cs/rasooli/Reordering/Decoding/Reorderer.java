@@ -398,6 +398,8 @@ public class Reorderer {
 
         builder.append("\nprocessing heads\n");
         for (int head : heads) {
+            if (bitextDependency.getSourceTree().getCurrentHead(head) != 0)
+                continue;
             builder.append("head:" + head + "\n");
             if (bitextDependency.getTrainableHeads().contains(head)) {
                 builder.append("head:" + head + "trainable\n");

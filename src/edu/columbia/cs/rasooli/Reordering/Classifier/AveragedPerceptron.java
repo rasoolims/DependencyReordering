@@ -1,6 +1,5 @@
 package edu.columbia.cs.rasooli.Reordering.Classifier;
 
-import edu.columbia.cs.rasooli.Reordering.Enums.ClassifierType;
 import edu.columbia.cs.rasooli.Reordering.Structures.CompactArray;
 
 import java.io.Serializable;
@@ -48,11 +47,6 @@ public class AveragedPerceptron  implements Serializable,Classifier {
             values.expandArray(label, change);
             (avgWeights[slot].get(feature)).expandArray(label, iteration * change);
         }
-    }
-
-    @Override
-    public ClassifierType getType() {
-        return ClassifierType.perceptron;
     }
 
     @Override
