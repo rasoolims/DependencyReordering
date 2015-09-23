@@ -23,7 +23,7 @@ public class Options {
     public boolean decodeWithAlignment=false;
     public boolean decode=false;
     public int[] tunedIterations;
-    public boolean twoClasifier=true;
+    public boolean twoClassifier =true;
 
     public int maxIter;
     public String modelPath;
@@ -39,7 +39,7 @@ public class Options {
         numOfThreads=8;
         decodeWithAlignment=false;
         decode=false;
-        twoClasifier=true;
+        twoClassifier =true;
         tunedIterations = null;
     }
     
@@ -69,7 +69,7 @@ public class Options {
             else if(args[i].equals("-p"))
                 universalPOSPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-c1"))
-                twoClasifier=false;
+                twoClassifier =false;
             else if(args[i].equals("-m"))
                 modelPath=new File(args[i+1]).getAbsolutePath();
             else if(args[i].equals("-iter"))
@@ -130,7 +130,7 @@ public class Options {
             builder.append("universal-pos: "+universalPOSPath+"\n");
             builder.append("training-iterations: "+maxIter+"\n");
             builder.append("topK: "+topK+"\n");
-            builder.append("left-right-classification: "+twoClasifier+"\n");
+            builder.append("left-right-classification: "+ twoClassifier +"\n");
         }  else{
             builder.append("model: "+modelPath+"\n");
             builder.append("input-file: "+inputFile+"\n");

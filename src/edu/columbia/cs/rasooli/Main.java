@@ -25,7 +25,7 @@ public class Main {
             if (options.hasSufficientArguments()) {
                 System.out.println(options);
                 if (options.train) {
-                    if (options.twoClasifier) {
+                    if (options.twoClassifier) {
                         Trainer trainer = new Trainer(options.trainTreePath, options.trainIntersectionPath,
                                 options.devTreePath, options.devIntersectionPath, options.universalPOSPath, 5, options.topK, 189);
                         trainer.trainWithPerceptron(options.maxIter, options.modelPath, true);
